@@ -1,12 +1,13 @@
 use chrono::{DateTime, Utc};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 use rexpect::ReadUntil;
 use crate::switch::worker::process::ProcessStage;
 use crate::switch::worker::RexpectSession;
 use crate::switch::worker::action::Action;
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DeviceInformation {
     SerialNumber(String),
     SoftwareVersion(String),

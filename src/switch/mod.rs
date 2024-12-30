@@ -6,11 +6,13 @@ use crate::switch::worker::worker_function;
 pub mod connecter;
 mod worker;
 pub use worker::process::ProcessStage;
+pub use crate::switch::worker::state::DeviceInformation;
 
 pub enum PortUpdate {
     PortStateTransition(ProcessStage, ProcessStage),
     PortStatusUpdate(PortStatus),
     PortJobStart(DateTime<Utc>),
+    PortNewInfoItem(DeviceInformation),
 }
 
 pub type PortUpdateChannelType = (DateTime<Utc>, PortUpdate);

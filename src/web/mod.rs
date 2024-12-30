@@ -12,7 +12,7 @@ mod manager;
 mod pages;
 
 pub async fn web_main(config: Config, ports: Vec<SpawnedPort>) -> color_eyre::Result<()> {
-    let (manager, port_jobs) = PortManager::spawn(ports);
+    let (manager, port_jobs) = PortManager::spawn(ports).await?;
 
     let app = Router::new()
         .route("/", get(index))

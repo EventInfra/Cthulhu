@@ -4,9 +4,13 @@
     <meta charset="utf-8"/>
     <meta http-equiv="refresh" content="1"/>
     <style>
-        td {
-            border-left: 1px solid black;
-            padding: 3px;
+        .outer td {
+            border: 1px solid black;
+            padding: 3px 5px;
+        }
+        .inner td {
+            border: none;
+            padding: 1px;
         }
         a {
             color: black;
@@ -14,38 +18,43 @@
     </style>
 </head>
 <body>
-<table>
+{% set column_height = 7 %}
+{% set total_columns = ports | length | column_calc(height = column_height) %}
+{% set max_ports = ports | length %}
+<table class="outer">
+    {% for i in range(start=0, end=column_height, step=1) %}
     <tr>
-        <th>Label</th>
-        {% for i in range(start=0, end=(ports | length), step_by=2) %}
-        {% set port = ports | nth(n=i) %}
-        <td><a href="/port/{{port.label}}" target="_blank">{{port.label}}</a></td>
+        {% for j in range(start=0, end=total_columns, step=1) %}
+        <td>
+            {% set port_n = (j * total_columns) + i %}
+            {% if port_n < max_ports %}
+            {% set port = ports | nth(n=port_n) %}
+            <table class="inner">
+                <tr style="background-color: {{port.status | csscolor}}">
+                    <td></td>
+                    <td><b><a href="/port/{{port.label}}" target="_blank">{{ port.label }}</a></b></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>
+                        {{port.last_update | format_timeago}}
+                    </td>
+                    <td></td>
+                    <td>
+                        {{port.status | format_status}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{{port.info_items | get_manuf}}</td>
+                    <td>{{port.info_items | get_model}}</td>
+                    <td>{{port.info_items | get_sn}}</td>
+                </tr>
+            </table>
+            {% endif %}
+        </td>
         {% endfor %}
     </tr>
-    <tr>
-        <th>Status</th>
-        {% for i in range(start=0, end=(ports | length), step_by=2) %}
-        {% set port = ports | nth(n=i) %}
-        <td style="background-color: {{ port.status | csscolor }};">{{port.status}}</td>
-        {% endfor %}
-    </tr>
-    <tr>
-        <td></td>
-    </tr>
-    <tr>
-        <th>Label</th>
-        {% for i in range(start=1, end=(ports | length), step_by=2) %}
-        {% set port = ports | nth(n=i) %}
-        <td><a href="/port/{{port.label}}" target="_blank">{{port.label}}</a></td>
-        {% endfor %}
-    </tr>
-    <tr>
-        <th>Status</th>
-        {% for i in range(start=1, end=(ports | length), step_by=2) %}
-        {% set port = ports | nth(n=i) %}
-        <td style="background-color: {{ port.status | csscolor }};">{{port.status}}</td>
-        {% endfor %}
-    </tr>
+    {% endfor %}
 </table>
 </body>
 </html>

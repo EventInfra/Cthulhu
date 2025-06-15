@@ -2,7 +2,8 @@ use crate::manager::PortManagerEntry;
 use crate::web::WebState;
 use crate::web::tera::TERA;
 use axum::extract::{Path, State};
-use axum::response::{Html, IntoResponse};
+use axum::http::StatusCode;
+use axum::response::{Html, IntoResponse, Response};
 use cthulhu_common::status::JobCommand;
 use serde::Serialize;
 use tera_template_macro::TeraTemplate;
@@ -61,34 +62,46 @@ pub async fn index_portstatus(State(state): State<WebState>) -> impl IntoRespons
 pub async fn logs_page(
     State(state): State<WebState>,
     Path(port_label): Path<String>,
-) -> impl IntoResponse {
-    let port = state.manager.get_port(&port_label).await.unwrap();
+) -> Response {
+    let port = if let Some(v) = state.manager.get_port(&port_label).await {
+        v
+    } else {
+        return (StatusCode::NOT_FOUND, "Port not found").into_response();
+    };
     let context = PortPageTemplate { port };
 
     let tera = TERA.read().await.clone();
-    Html(context.render(&tera))
+    Html(context.render(&tera)).into_response()
 }
 
 pub async fn header_page(
     State(state): State<WebState>,
     Path(port_label): Path<String>,
-) -> impl IntoResponse {
-    let port = state.manager.get_port(&port_label).await.unwrap();
+) -> Response {
+    let port = if let Some(v) = state.manager.get_port(&port_label).await {
+        v
+    } else {
+        return (StatusCode::NOT_FOUND, "Port not found").into_response();
+    };
     let context = PortHeaderPageTemplate { port };
 
     let tera = TERA.read().await.clone();
-    Html(context.render(&tera))
+    Html(context.render(&tera)).into_response()
 }
 
 pub async fn devinfo_page(
     State(state): State<WebState>,
     Path(port_label): Path<String>,
-) -> impl IntoResponse {
-    let port = state.manager.get_port(&port_label).await.unwrap();
+) -> Response {
+    let port = if let Some(v) = state.manager.get_port(&port_label).await {
+        v
+    } else {
+        return (StatusCode::NOT_FOUND, "Port not found").into_response();
+    };
     let context = PortDevInfoPageTemplate { port };
 
     let tera = TERA.read().await.clone();
-    Html(context.render(&tera))
+    Html(context.render(&tera)).into_response()
 }
 
 pub async fn abort(

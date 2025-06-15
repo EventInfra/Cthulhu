@@ -1,7 +1,7 @@
 log_dir = "/tmp/cthulhu/"
 
 [RawTCP]
-endpoint = "192.168.0.171:4001"
+endpoint = "172.16.0.1:4001"
 
 [Heaven]
 id = "S1"

@@ -26,7 +26,7 @@ struct WebState {
 }
 
 pub async fn web_main(
-    config: &HeavenConfig,
+    config: HeavenConfig,
     manager: JobManager,
     mqtt: MQTTSender,
     broadcast: BroadcastSender,

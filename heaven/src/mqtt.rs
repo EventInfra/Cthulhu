@@ -14,7 +14,7 @@ pub enum MQTTBroadcast {
 pub type BroadcastSender = Sender<MQTTBroadcast>;
 
 pub fn create_broadcast() -> BroadcastSender {
-    broadcast::channel(16).0
+    broadcast::channel(4096).0
 }
 
 pub async fn mqtt_main(
@@ -34,12 +34,12 @@ pub async fn mqtt_main(
                 if let Some(caps) = update_re.captures(&publish.topic) {
                     let label = (&caps["port_label"]).to_string();
                     let update: JobUpdate = serde_json::from_slice(&publish.payload)?;
-                    sender.send(MQTTBroadcast::JobUpdate { label, update })?;
+                    let _ = sender.send(MQTTBroadcast::JobUpdate { label, update });
                 }
                 if let Some(caps) = serial_re.captures(&publish.topic) {
                     let label = (&caps["port_label"]).to_string();
                     let data = publish.payload.to_vec();
-                    sender.send(MQTTBroadcast::SerialData { label, data })?;
+                    let _ = sender.send(MQTTBroadcast::SerialData { label, data });
                 }
             }
             _ => {

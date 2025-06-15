@@ -195,6 +195,13 @@ impl ProcessStageTransition for ProcessStage {
                     ],
                 },
                 StateTransition {
+                    target_state: ProcessStage::EndJob,
+                    condition: StateCondition::WaitForString("continue, shell, abort, retry, or reboot".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::OSCorruption),
+                    ],
+                },
+                StateTransition {
                     target_state: ProcessStage::JunosWaitForBootloader,
                     condition: StateCondition::WaitForString("error: filesystem consistency checks (fsck -p -y) failed".to_string()),
                     actions: vec![

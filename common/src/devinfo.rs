@@ -16,6 +16,7 @@ pub enum DeviceInformation {
     UnableToLoadAKernel,
     AlternateImage,
     StrangeCLIPrompt,
+    OSCorruption,
 }
 
 impl DeviceInformation {
@@ -35,6 +36,7 @@ impl DeviceInformation {
             DeviceInformation::UnableToLoadAKernel => DeviceInformationType::Warning,
             DeviceInformation::AlternateImage => DeviceInformationType::Warning,
             DeviceInformation::StrangeCLIPrompt => DeviceInformationType::Warning,
+            DeviceInformation::OSCorruption => DeviceInformationType::Error,
         }
     }
 }

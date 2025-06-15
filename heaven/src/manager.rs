@@ -6,7 +6,9 @@ use cthulhu_common::status::{JobUpdate, PortJobStatus};
 use serde::Serialize;
 use std::ops::Add;
 use std::sync::Arc;
+use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::RwLock;
+use tracing::warn;
 
 #[derive(Default, Debug, Serialize, Clone)]
 pub struct PortManagerEntry {
@@ -124,15 +126,21 @@ pub async fn manager_main(
     manager: JobManager,
 ) -> color_eyre::Result<()> {
     let mut receiver = broadcast.subscribe();
-    while let Ok(msg) = receiver.recv().await {
+    loop {
+        let msg = receiver.recv().await;
         match msg {
-            MQTTBroadcast::JobUpdate { label, update } => {
+            Ok(MQTTBroadcast::JobUpdate { label, update }) => {
                 manager.accept_update(&label, update).await?;
             }
-            MQTTBroadcast::SerialData { label, data } => {
+            Ok(MQTTBroadcast::SerialData { label, data }) => {
                 manager.append_log_data(&label, &data).await?;
+            }
+            Err(RecvError::Lagged(n)) => {
+                warn!("Skipping {n} messages!");
+            }
+            Err(e) => {
+                return Err(e.into());
             }
         }
     }
-    Ok(())
 }

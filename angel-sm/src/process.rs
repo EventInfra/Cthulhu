@@ -337,7 +337,7 @@ impl ProcessStageTransition for ProcessStage {
                     target_state: ProcessStage::JunosBackupImageCli4,
                     condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
-                        Action::SendLine("request system reboot slice alternate media internal in 0".to_string())
+                        Action::SendLine("request system reboot slice alternate media internal at now".to_string())
                     ],
                 },
             ]),
@@ -377,7 +377,7 @@ impl ProcessStageTransition for ProcessStage {
                     condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
                         Action::Function(ProcessFunction::CaptureChassisOutput),
-                        Action::SendLine("request system power-off in 0".to_string()),
+                        Action::SendLine("request system power-off at now".to_string()),
                     ],
                 }
             ]),
@@ -394,7 +394,7 @@ impl ProcessStageTransition for ProcessStage {
                     target_state: ProcessStage::JunosPoweroffConfirm,
                     condition: StateCondition::WaitForString("error: command is not valid".to_string()),
                     actions: vec![
-                        Action::SendLine("request system halt in 0".to_string()),
+                        Action::SendLine("request system halt at now".to_string()),
                     ],
                 }
             ]),

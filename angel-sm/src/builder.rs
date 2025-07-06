@@ -110,7 +110,7 @@ impl StateMachineBuilder {
             // Any state whose dependencies are already in the destination or s is viable.
             for state_file in self.active_state_files.iter() {
                 if (!state_file.depends.iter().any(|i| {
-                    (!destination.iter().any(|f| &f.id == i)) && (!s.iter().any(|f| &f.id == i))
+                    !destination.iter().any(|f| &f.id == i)
                 })) && (!destination.contains(state_file))
                     && (!s.contains(state_file))
                 {
@@ -152,5 +152,38 @@ impl StateMachineBuilder {
 
         info!("Done! Total states = {}", sm.states.len());
         Ok(sm)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn build_all_states() -> color_eyre::Result<()> {
+        let mut builder = StateMachineBuilder::new();
+        builder.load_builtin_state_files()?;
+        builder.active_all_state_files()?;
+        let _sm = builder.build()?;
+        Ok(())
+    }
+
+    #[test]
+    fn state_ordering() -> color_eyre::Result<()> {
+        let mut builder = StateMachineBuilder::new();
+        builder.load_builtin_state_files()?;
+        builder.active_all_state_files()?;
+        builder.sort_state_files()?;
+        for i in 0..builder.active_state_files.len() {
+            let s = &builder.active_state_files[i];
+            'd_check: for d in s.depends.iter() {
+                for j in 0..i {
+                    if builder.active_state_files[j].id == d.as_str() {
+                        continue 'd_check;
+                    }
+                }
+                assert!(false, "dependency {d} of state {} is not ordered before it", s.id);
+            }
+        }
+        Ok(())
     }
 }

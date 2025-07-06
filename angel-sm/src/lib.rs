@@ -32,6 +32,3 @@ pub trait AngelJob {
         false
     }
 }
-
-#[cfg(test)]
-mod tests;

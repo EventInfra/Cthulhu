@@ -13,7 +13,7 @@ trait PortStatusExt {
 impl PortStatusExt for PortJobStatus {
     fn get_css_backgroundcolor(&self) -> String {
         match self {
-            PortJobStatus::Idle => "#ffffff".to_string(),
+            PortJobStatus::Idle => "var(--primary-background)".to_string(),
             PortJobStatus::FinishSuccess => "#00ff00".to_string(),
             PortJobStatus::FinishWarning => "#ff9933".to_string(),
             PortJobStatus::FinishError => "#ff0000".to_string(),

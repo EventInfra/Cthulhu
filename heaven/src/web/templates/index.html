@@ -3,8 +3,15 @@
 <head>
     <meta charset="utf-8"/>
     <style>
+        html {
+            color-scheme: light dark;
+            --primary-color: light-dark(#333, #fafafa);
+            --primary-background: light-dark(#e4e4e4, #121212);
+            --highlight-color: light-dark(hotpink, lime);
+        }
+
         .outer td {
-            border: 1px solid black;
+            border: 1px solid var(--primary-color);
             padding: 3px 5px;
         }
         .inner td {
@@ -12,8 +19,14 @@
             padding: 1px;
         }
         a {
-            color: black;
+            color: var(--primary-color);
         }
+
+        #portstatus {
+            background: var(--primary-background);
+            color: var(--primary-color);
+        }
+
     </style>
     <script>
         async function abortJob(job) {

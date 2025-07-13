@@ -1,7 +1,7 @@
 id = "junos_provision"
 
 depends = [
-  "common_junos_wipe"
+  "common_junos_wipe",
 ]
 
 state "HookJunosCLI" {

@@ -49,7 +49,7 @@ state "ProvisionJunos3" {
   transition {
     target = "ProvisionJunos4"
     trigger {
-      type  = "string"
+      type   = "string"
       string = "New password:"
     }
     action {
@@ -63,7 +63,7 @@ state "ProvisionJunos4" {
   transition {
     target = "ProvisionJunos5"
     trigger {
-      type  = "string"
+      type   = "string"
       string = "Retype new password:"
     }
     action {
@@ -177,8 +177,16 @@ state "ProvisionJunos9" {
       regex = "root@([A-Za-z0-9\\-]+)?:(RE|LC):0%"
     }
     action {
+      type = "Send"
+      text = "set REALTTY=`tty`; set PING_TGT=\""
+    }
+    action {
+      type = "SendConfigValue"
+      key  = "provision_ping_target"
+    }
+    action {
       type = "SendLine"
-      line = "set REALTTY=`tty`"
+      line = "\""
     }
   }
 }
@@ -201,7 +209,7 @@ pvfail() {
 }
 
 while ! (ifconfig vme | grep -q inet); do echo "[BOOTSTRAP] Waiting for DHCP (1)..." ; sleep 1 ; done
-while ! (ping -c 1 172.16.0.1); do echo "[BOOTSTRAP] Waiting for DHCP (2)..." ; sleep 1 ; done
+while ! (ping -c 1 $PING_TGT); do echo "[BOOTSTRAP] Waiting for DHCP (2)..." ; sleep 1 ; done
 
 echo "[BOOTSTRAP] Waiting an extra 5 seconds..."
 sleep 5
@@ -280,7 +288,7 @@ state "ProvisionJunosRunning" {
   transition {
     target = "EndJob"
     trigger {
-      type = "string"
+      type   = "string"
       string = "shutdown"
     }
     action {
@@ -292,7 +300,7 @@ state "ProvisionJunosRunning" {
   transition {
     target = "EndJob"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Shutdown"
     }
     action {
@@ -304,7 +312,7 @@ state "ProvisionJunosRunning" {
   transition {
     target = "EndJob"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Waiting (max 60 seconds) for system process"
     }
     action {
@@ -330,7 +338,7 @@ state "ProvisionJunosFinish" {
   transition {
     target = "JunosWaitForPoweroff"
     trigger {
-      type = "string"
+      type   = "string"
       string = "shutdown"
     }
   }
@@ -338,7 +346,7 @@ state "ProvisionJunosFinish" {
   transition {
     target = "JunosWaitForPoweroff"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Shutdown"
     }
   }
@@ -346,7 +354,7 @@ state "ProvisionJunosFinish" {
   transition {
     target = "JunosWaitForPoweroff"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Waiting (max 60 seconds) for system process"
     }
   }

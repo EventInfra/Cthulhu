@@ -1,31 +1,15 @@
 use chrono::{DateTime, Utc};
 use cthulhu_common::devinfo::DeviceInformation;
-use cthulhu_common::status::PortJobStatus;
 use include_dir::{Dir, include_dir};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tera::{Tera, Value};
 use tokio::sync::RwLock;
-
-trait PortStatusExt {
-    fn get_css_backgroundcolor(&self) -> String;
-}
-impl PortStatusExt for PortJobStatus {
-    fn get_css_backgroundcolor(&self) -> String {
-        match self {
-            PortJobStatus::Idle => "var(--primary-background)".to_string(),
-            PortJobStatus::FinishSuccess => "#00ff00".to_string(),
-            PortJobStatus::FinishWarning => "#ff9933".to_string(),
-            PortJobStatus::FinishError => "#ff0000".to_string(),
-            PortJobStatus::Busy => "#33bbff".to_string(),
-            PortJobStatus::RunningLong => "#bb33ff".to_string(),
-            PortJobStatus::Fatal => "#ff33dd".to_string(),
-        }
-    }
-}
+use cthulhu_common::job::JobStatus;
+use crate::web::helpers::PortStatusExt;
 
 fn csscolor_filter(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
-    let status: PortJobStatus = serde_json::from_value(input.clone())?;
+    let status: JobStatus = serde_json::from_value(input.clone())?;
     let color = status.get_css_backgroundcolor();
     Ok(serde_json::to_value(color)?)
 }
@@ -37,13 +21,13 @@ fn render_devinfo(input: &Value, _args: &HashMap<String, Value>) -> tera::Result
 }
 
 fn format_status(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
-    let v: PortJobStatus = serde_json::from_value(input.clone())?;
+    let v: JobStatus = serde_json::from_value(input.clone())?;
     let d = format!("{}", v);
     Ok(serde_json::to_value(d)?)
 }
 
 fn is_finished(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
-    let v: PortJobStatus = serde_json::from_value(input.clone())?;
+    let v: JobStatus = serde_json::from_value(input.clone())?;
     let d = v.is_finished();
     Ok(serde_json::to_value(d)?)
 }

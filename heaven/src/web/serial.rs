@@ -31,7 +31,7 @@ async fn serial_handle_socket(mut socket: WebSocket, state: WebState, port: Port
     while let Ok(message) = receiver.recv().await {
         match message {
             MQTTBroadcast::SerialData { label, data } => {
-                if label == port.label {
+                if label == port.data.label {
                     socket
                         .send(Message::Binary(Bytes::from(data)))
                         .await

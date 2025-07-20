@@ -13,10 +13,6 @@ state "SwitchDetect" {
       string = "U-Boot 1.1"
     }
     action {
-      type   = "UpdatePortStatus"
-      status = "Busy"
-    }
-    action {
       type   = "AddDeviceInfo"
       Vendor = "Juniper"
     }
@@ -26,10 +22,6 @@ state "SwitchDetect" {
     trigger {
       type   = "string"
       string = "U-Boot 2010.03"
-    }
-    action {
-      type   = "UpdatePortStatus"
-      status = "Busy"
     }
     action {
       type   = "AddDeviceInfo"

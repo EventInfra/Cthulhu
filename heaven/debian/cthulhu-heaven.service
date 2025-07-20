@@ -4,6 +4,8 @@ Description=Cthulhu - Heaven
 [Service]
 ExecStart=/usr/bin/cthulhu-heaven -c /etc/cthulhu/heaven.toml
 Environment="RUST_BACKTRACE=1"
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target

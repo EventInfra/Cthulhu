@@ -1,23 +1,24 @@
-use std::collections::BTreeMap;
 use crate::logging::TracingTarget;
 use crate::mqtt::MQTTSender;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use color_eyre::eyre::Context;
 use cthulhu_angel_sm::AngelJob;
 use cthulhu_angel_sm::data_structure::{State, StateMachineTransition, StateMachineTrigger};
 use cthulhu_angel_sm::state::StateMachine;
-use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
+use cthulhu_common::devinfo::DeviceInformation;
+use cthulhu_common::job::JobData;
 use cthulhu_common::status::JobUpdate;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use swexpect::SwitchExpect;
 use swexpect::hay::ReadUntil;
 use tracing::{debug, info};
 
 pub struct ActiveJob {
+    pub data: JobData,
     state_machine: StateMachine,
+    shutdown_requested: bool,
     current_state: State,
-    information: Vec<DeviceInformation>,
-    job_started: DateTime<Utc>,
     pub mqtt: MQTTSender,
     tracing_target: TracingTarget,
     rawlog_target: TracingTarget,
@@ -32,7 +33,7 @@ impl AngelJob for ActiveJob {
                 let mut tracing_log_file = log_dir.clone();
                 tracing_log_file.push(format!(
                     "{}--{}.log",
-                    self.job_started.format("%Y-%m-%d--%H:%M:%S"),
+                    self.data.job_started.unwrap_or(Utc::now()).format("%Y-%m-%d--%H:%M:%S"),
                     self.mqtt.id()
                 ));
                 self.tracing_target.open_file(tracing_log_file)?;
@@ -41,7 +42,7 @@ impl AngelJob for ActiveJob {
                 let mut raw_log_file = log_dir.clone();
                 raw_log_file.push(format!(
                     "{}--{}.raw.log",
-                    self.job_started.format("%Y-%m-%d--%H:%M:%S"),
+                    self.data.job_started.unwrap_or(Utc::now()).format("%Y-%m-%d--%H:%M:%S"),
                     self.mqtt.id()
                 ));
                 self.rawlog_target.open_file(raw_log_file)?;
@@ -51,21 +52,25 @@ impl AngelJob for ActiveJob {
         Ok(())
     }
 
-    async fn send_update(&mut self, update: JobUpdate) -> color_eyre::Result<()> {
-        self.mqtt.send_update(update).await?;
+    async fn finish_job(&mut self) -> color_eyre::Result<()> {
+        info!("Job finished!");
+        info!("Information items:");
+        for i in self.data.info_items.iter() {
+            info!(" - {i:?}");
+        }
+        self.send_update(JobUpdate::JobEnd(Utc::now())).await?;
         Ok(())
     }
 
     async fn reset(&mut self) -> color_eyre::Result<()> {
         info!("Resetting job...");
-        let old_stage = self.current_state.clone();
+        //TODO: Maybe send a JobEnd sometimes?
+
         self.current_state = "Init".to_string();
-        self.information = Vec::new();
-        self.job_started = Utc::now();
-        self.send_update(JobUpdate::JobStart(self.job_started.clone()))
-            .await?;
+        self.data.reset();
+        self.send_update(JobUpdate::JobStart(Utc::now())).await?;
         self.send_update(JobUpdate::JobStageTransition(
-            old_stage,
+            Utc::now(),
             self.current_state.clone(),
         ))
         .await?;
@@ -73,22 +78,10 @@ impl AngelJob for ActiveJob {
     }
 
     async fn add_information(&mut self, information: DeviceInformation) -> color_eyre::Result<()> {
-        if !self.information.contains(&information) {
-            info!("Recorded new switch information: {information:?}");
-            self.information.push(information.clone());
-            self.mqtt
-                .send_update(JobUpdate::JobNewInfoItem(information))
-                .await?;
-        }
+        info!("Recorded new switch information: {information:?}");
+        self.send_update(JobUpdate::JobNewInfoItem(information))
+            .await?;
         Ok(())
-    }
-
-    fn get_information(&self) -> &[DeviceInformation] {
-        &self.information
-    }
-
-    fn get_max_information_type(&self) -> Option<DeviceInformationType> {
-        self.information.iter().map(|i| i.get_type()).max()
     }
 
     async fn get_job_config_key(&self, key: &str) -> Option<String> {
@@ -106,15 +99,15 @@ impl ActiveJob {
         job_config: BTreeMap<String, String>,
     ) -> Self {
         Self {
+            data: JobData::with_label(mqtt.id()),
             current_state: "Init".to_string(),
             mqtt,
-            information: Vec::new(),
-            job_started: Utc::now(),
             log_dir,
             tracing_target,
             rawlog_target,
             state_machine,
             job_config,
+            shutdown_requested: false,
         }
     }
 
@@ -131,8 +124,7 @@ impl ActiveJob {
         let old_state = self.current_state.clone();
         self.current_state = t.target.clone();
         info!("State transition: {:?} -> {:?}", old_state, t.target);
-        self.mqtt
-            .send_update(JobUpdate::JobStageTransition(old_state, t.target.clone()))
+        self.send_update(JobUpdate::JobStageTransition(Utc::now(), t.target.clone()))
             .await?;
         for action in &t.actions {
             action.perform(self, p, d, m).await?;
@@ -175,6 +167,23 @@ impl ActiveJob {
             }
         }
 
+        Ok(())
+    }
+
+    pub async fn flag_restart(&mut self) -> color_eyre::Result<()> {
+        if self.data.get_status().is_idle() {
+            panic!("Crash requested!");
+        }
+        self.shutdown_requested = true;
+        Ok(())
+    }
+
+    async fn send_update(&mut self, update: JobUpdate) -> color_eyre::Result<()> {
+        self.data.update(update.clone());
+        self.mqtt.send_update(update).await?;
+        if self.shutdown_requested && self.data.get_status().is_idle() {
+            panic!("Crash requested!");
+        }
         Ok(())
     }
 }

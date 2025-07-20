@@ -1,0 +1,23 @@
+html {
+    color-scheme: light dark;
+    --primary-color: light-dark(#333, #fafafa);
+    --primary-background: light-dark(#e4e4e4, #121212);
+    --highlight-color: light-dark(hotpink, lime);
+}
+
+.outer td {
+    border: 1px solid var(--primary-color);
+    padding: 3px 5px;
+}
+.inner td {
+    border: none;
+    padding: 1px;
+}
+a {
+    color: var(--primary-color);
+}
+
+#portstatus {
+    background: var(--primary-background);
+    color: var(--primary-color);
+}

@@ -14,4 +14,4 @@ default-members = [
 ]
 
 [profile.release]
-debug = true
+#debug = true

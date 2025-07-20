@@ -45,7 +45,7 @@ async fn main() -> color_eyre::Result<()> {
         web::web_main(
             config.clone(),
             manager.clone(),
-            mqtt_sender,
+            mqtt_sender.clone(),
             mqtt_broadcast.clone(),
         ),
     )
@@ -57,7 +57,7 @@ async fn main() -> color_eyre::Result<()> {
     .await;
     let c = yeller(
         "manager".to_string(),
-        manager::manager_main(mqtt_broadcast, manager),
+        manager::manager_main(mqtt_broadcast, mqtt_sender, manager),
     )
     .await;
 

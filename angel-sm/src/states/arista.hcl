@@ -9,10 +9,6 @@ state "SwitchDetect" {
       string = "Aboot"
     }
     action {
-      type   = "UpdatePortStatus"
-      status = "Busy"
-    }
-    action {
       type   = "AddDeviceInfo"
       Vendor = "Arista"
     }

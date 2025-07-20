@@ -1,0 +1,33 @@
+html {
+    color-scheme: light dark;
+    --primary-color: light-dark(#333, #fafafa);
+    --primary-background: light-dark(#e4e4e4, #121212);
+    --highlight-color: light-dark(hotpink, lime);
+}
+
+body {
+    background: var(--primary-background);
+    color: var(--primary-color);
+}
+
+#terminal {
+    width: 100%;
+    height: 100%;
+}
+#header {
+    width: 100%;
+}
+
+#devinfo {
+    width: 100%;
+}
+
+#devinfo td {
+    border-right: 1em solid transparent;
+    text-align: left;
+    vertical-align: top;
+}
+
+#devinfo td:last-of-type {
+    border-right: 0;
+}

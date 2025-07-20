@@ -7,7 +7,7 @@ use clap::Parser;
 use color_eyre::eyre::eyre;
 use cthulhu_angel_sm::AngelJob;
 use cthulhu_angel_sm::builder::StateMachineBuilder;
-use cthulhu_common::status::{JobCommand, JobUpdate, PortJobStatus};
+use cthulhu_common::status::{JobCommand, JobUpdate};
 use cthulhu_config::angel::AngelConfig;
 use swexpect::SwitchExpect;
 use tokio::sync::mpsc;
@@ -48,7 +48,7 @@ async fn main() -> color_eyre::Result<()> {
     let sm = smb.build()?;
 
     let mut job = ActiveJob::create(
-        mqtt_sender,
+        mqtt_sender.clone(),
         config.log_dir.clone(),
         tracing_target,
         rawlog_target,
@@ -56,8 +56,6 @@ async fn main() -> color_eyre::Result<()> {
         config.job_config.clone(),
     );
     job.reset().await?;
-    job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle))
-        .await?;
 
     loop {
         tokio::select! {
@@ -66,8 +64,13 @@ async fn main() -> color_eyre::Result<()> {
                     match cmd {
                         JobCommand::ResetJob => {
                             job.reset().await?;
-                            job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle)).await?;
-                        }
+                        },
+                        JobCommand::RestartAngel => {
+                            job.flag_restart().await?;
+                        },
+                        JobCommand::GetJobData => {
+                            mqtt_sender.send_update(JobUpdate::JobFullData(job.data.clone())).await?;
+                        },
                     }
                 } else {
                     return Err(eyre!("MQTT broken."));

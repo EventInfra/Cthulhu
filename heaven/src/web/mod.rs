@@ -1,6 +1,6 @@
 use crate::manager::JobManager;
 use crate::mqtt::{BroadcastSender, MQTTSender};
-use crate::web::pages::{abort, devinfo_page, header_page, index, index_portstatus, logs_page};
+use crate::web::pages::{abort, restart_all};
 use crate::web::serial::serial_handler;
 use axum::Router;
 use axum::body::Body;
@@ -16,7 +16,7 @@ use tracing::info;
 mod pages;
 
 mod serial;
-mod tera;
+mod helpers;
 
 #[derive(Clone)]
 struct WebState {
@@ -37,11 +37,12 @@ pub async fn web_main(
         broadcast,
     };
     let app = Router::new()
-        .route("/", get(index))
-        .route("/portstatus.html", get(index_portstatus))
-        .route("/port/{port_label}/", get(logs_page))
-        .route("/port/{port_label}/header.html", get(header_page))
-        .route("/port/{port_label}/devinfo.html", get(devinfo_page))
+        .route("/", get(pages::index::index))
+        .route("/portstatus.html", get(pages::index::port_status))
+        .route("/restart", get(restart_all))
+        .route("/port/{port_label}/", get(pages::port::port))
+        .route("/port/{port_label}/header.html", get(pages::port::header))
+        .route("/port/{port_label}/devinfo.html", get(pages::port::footer))
         .route("/port/{port_label}/abort", get(abort))
         .route("/port/{port_label}/serial", get(serial_handler))
         .route("/assets/{*path}", get(static_path))

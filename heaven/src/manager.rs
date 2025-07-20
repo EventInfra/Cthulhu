@@ -1,22 +1,15 @@
-use crate::mqtt::{BroadcastSender, MQTTBroadcast};
-use chrono::{DateTime, TimeDelta, Utc};
-use cthulhu_common::devinfo::DeviceInformation;
-use cthulhu_common::status::{JobUpdate, PortJobStatus};
+use crate::mqtt::{BroadcastSender, MQTTBroadcast, MQTTSender};
+use cthulhu_common::status::{JobCommand, JobUpdate};
 use serde::Serialize;
-use std::ops::Add;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::broadcast::error::RecvError;
 use tracing::warn;
+use cthulhu_common::job::JobData;
 
 #[derive(Default, Debug, Serialize, Clone)]
 pub struct PortManagerEntry {
-    pub label: String,
-    pub last_update: DateTime<Utc>,
-    pub job_started: DateTime<Utc>,
-    pub current_stage: String,
-    pub status: PortJobStatus,
-    pub info_items: Vec<DeviceInformation>,
+    pub data: JobData,
     pub log_buffer: Vec<u8>,
 }
 
@@ -30,13 +23,13 @@ impl JobManagerInner {
             .ports
             .iter()
             .enumerate()
-            .find(|(_, x)| x.label == port_label)
+            .find(|(_, x)| x.data.label == port_label)
             .map(|(i, _)| i);
         if let Some(index) = existing_index {
             self.ports.get_mut(index).unwrap()
         } else {
             self.ports.push(PortManagerEntry {
-                label: port_label.to_string(),
+                data: JobData::with_label(port_label),
                 ..Default::default()
             });
             self.ports.last_mut().unwrap()
@@ -61,14 +54,6 @@ impl JobManager {
         r.ports
             .iter()
             .cloned()
-            .map(|mut p| {
-                if p.last_update.add(TimeDelta::new(60 * 15, 0).unwrap()) < Utc::now()
-                    && !p.status.is_idle()
-                {
-                    p.status = PortJobStatus::RunningLong;
-                }
-                p
-            })
             .collect()
     }
 
@@ -76,16 +61,8 @@ impl JobManager {
         let r = self.inner.read().await;
         r.ports
             .iter()
-            .find(|p| p.label == label)
+            .find(|p| p.data.label == label)
             .cloned()
-            .map(|mut p| {
-                if p.last_update.add(TimeDelta::new(60 * 15, 0).unwrap()) < Utc::now()
-                    && !p.status.is_idle()
-                {
-                    p.status = PortJobStatus::RunningLong;
-                }
-                p
-            })
     }
 
     async fn append_log_data(&self, port_label: &str, data: &[u8]) -> color_eyre::Result<()> {
@@ -98,33 +75,28 @@ impl JobManager {
         let mut inner = self.inner.write().await;
         let existing = inner.get_port_mut(port_label);
 
-        existing.last_update = Utc::now();
-
-        match update {
-            JobUpdate::JobStageTransition(_old, new) => {
-                existing.current_stage = new;
+        match &update {
+            JobUpdate::JobStart(_) => {
+                existing.log_buffer = Vec::new();
             }
-            JobUpdate::JobStatusUpdate(new) => {
-                existing.status = new;
-            }
-            JobUpdate::JobStart(s) => {
-                existing.job_started = s;
-                existing.info_items.clear();
-                existing.log_buffer.clear();
-            }
-            JobUpdate::JobNewInfoItem(i) => {
-                existing.info_items.push(i);
-            }
+            _ => {}
         }
+
+        existing.data.update(update);
+
         Ok(())
     }
 }
 
 pub async fn manager_main(
     broadcast: BroadcastSender,
+    sender: MQTTSender,
     manager: JobManager,
 ) -> color_eyre::Result<()> {
     let mut receiver = broadcast.subscribe();
+
+    sender.broadcast_command(JobCommand::GetJobData).await?;
+    
     loop {
         let msg = receiver.recv().await;
         match msg {

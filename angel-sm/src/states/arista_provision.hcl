@@ -100,6 +100,8 @@ echo "[BOOTSTRAP] Running provisioning script..."
 /mnt/flash/provision.sh || pvfail
 echo '[BOOTSTRAP] Provisioning complete!'
 echo -en "PROVISION_SUCCESS\r\n" >> $REALTTY
+echo '[BOOTSTRAP] Waiting a bit...'
+sleep 30
 echo '[BOOTSTRAP] Rebooting...'
 sudo reboot
 exit 0
@@ -224,6 +226,16 @@ state "ProvisionAristaFinish" {
     }
   }
 
+  transition {
+    target = "ProvisionAristaRestart"
+    trigger {
+      type = "string"
+      string = "Aboot"
+    }
+  }
+}
+
+state "ProvisionAristaRestart" {
   transition {
     target = "EndJob"
     trigger {

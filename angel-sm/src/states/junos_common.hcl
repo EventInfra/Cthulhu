@@ -191,7 +191,7 @@ state "JunosBackupImageCli3" {
     }
     action {
       type = "SendLine"
-      line = "request system reboot slice alternate media internal at now"
+      line = "request system reboot at now"
     }
   }
 }

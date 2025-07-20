@@ -1,12 +1,11 @@
 use crate::AngelJob;
 use crate::pfunc::ProcessFunction;
 use crate::util::{vec_or_single, deser_duration};
-use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
-use cthulhu_common::status::{JobUpdate, PortJobStatus};
+use cthulhu_common::devinfo::DeviceInformation;
 use serde::Deserialize;
 use std::time::Duration;
 use swexpect::SwitchExpect;
-use tracing::{info, warn};
+use tracing::warn;
 
 #[derive(Deserialize, Clone, Debug, PartialOrd, PartialEq)]
 #[serde(untagged)]
@@ -49,9 +48,6 @@ pub enum Action {
         #[serde(deserialize_with = "deser_duration")]
         duration: Duration,
     },
-    UpdatePortStatus {
-        status: PortJobStatus,
-    },
     AddDeviceInfo(DeviceInfoArg),
     FinishJob,
     SetupJob,
@@ -87,22 +83,7 @@ impl Action {
             }
             Action::Function { func: pf } => pf.execute(job, p, data, mat).await,
             Action::FinishJob => {
-                info!("Job finished!");
-                info!("Information items:");
-                for i in job.get_information() {
-                    info!(" - {i:?}");
-                }
-
-                let new_status = match job.get_max_information_type() {
-                    Some(DeviceInformationType::Info) => PortJobStatus::FinishSuccess,
-                    Some(DeviceInformationType::Warning) => PortJobStatus::FinishWarning,
-                    Some(DeviceInformationType::Error) => PortJobStatus::FinishError,
-                    None => PortJobStatus::Idle,
-                };
-
-                job.send_update(JobUpdate::JobStatusUpdate(new_status))
-                    .await?;
-                //job.reset().await?;
+                job.finish_job().await?;
                 Ok(())
             }
             Action::Repeat {
@@ -118,10 +99,6 @@ impl Action {
             }
             Action::Delay { duration: d } => {
                 tokio::time::sleep(*d).await;
-                Ok(())
-            }
-            Action::UpdatePortStatus { status: s } => {
-                job.send_update(JobUpdate::JobStatusUpdate(*s)).await?;
                 Ok(())
             }
             Action::AddDeviceInfo(i) => {

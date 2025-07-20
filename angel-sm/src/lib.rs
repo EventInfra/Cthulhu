@@ -1,5 +1,4 @@
-use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
-use cthulhu_common::status::JobUpdate;
+use cthulhu_common::devinfo::DeviceInformation;
 
 pub mod action;
 pub mod builder;
@@ -14,21 +13,8 @@ mod util;
 #[allow(async_fn_in_trait)]
 pub trait AngelJob {
     async fn init_job(&mut self) -> color_eyre::Result<()>;
-    async fn send_update(&mut self, update: JobUpdate) -> color_eyre::Result<()>;
+    async fn finish_job(&mut self) -> color_eyre::Result<()>;
     async fn reset(&mut self) -> color_eyre::Result<()>;
     async fn add_information(&mut self, information: DeviceInformation) -> color_eyre::Result<()>;
-    fn get_information(&self) -> &[DeviceInformation];
-    fn get_max_information_type(&self) -> Option<DeviceInformationType>;
-
     async fn get_job_config_key(&self, key: &str) -> Option<String>;
-
-    fn has_information(&self, target_info: &DeviceInformation) -> bool {
-        let infos = self.get_information();
-        for info in infos {
-            if info == target_info {
-                return true;
-            }
-        }
-        false
-    }
 }

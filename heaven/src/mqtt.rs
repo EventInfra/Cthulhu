@@ -3,7 +3,7 @@ use regex::Regex;
 use rumqttc::{AsyncClient, Event, EventLoop, Incoming, QoS};
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
-use tracing::trace;
+use tracing::{info, trace};
 
 #[derive(Clone, Debug)]
 pub enum MQTTBroadcast {
@@ -22,11 +22,11 @@ pub async fn mqtt_main(
     mqtt_client: AsyncClient,
     mut eventloop: EventLoop,
 ) -> color_eyre::Result<()> {
-    mqtt_client.subscribe("+/update", QoS::AtLeastOnce).await?;
-    mqtt_client.subscribe("+/serial", QoS::AtLeastOnce).await?;
+    mqtt_client.subscribe("cthulhu/+/update", QoS::AtLeastOnce).await?;
+    mqtt_client.subscribe("cthulhu/+/serial", QoS::AtLeastOnce).await?;
 
-    let update_re = Regex::new(r"(?<port_label>[^/]+)/update")?;
-    let serial_re = Regex::new(r"(?<port_label>[^/]+)/serial")?;
+    let update_re = Regex::new(r"cthulhu/(?<port_label>[^/]+)/update")?;
+    let serial_re = Regex::new(r"cthulhu/(?<port_label>[^/]+)/serial")?;
     loop {
         let r = eventloop.poll().await?;
         match r {
@@ -34,6 +34,7 @@ pub async fn mqtt_main(
                 if let Some(caps) = update_re.captures(&publish.topic) {
                     let label = (&caps["port_label"]).to_string();
                     let update: JobUpdate = serde_json::from_slice(&publish.payload)?;
+                    info!("Received update for port {label}: {update:?}");
                     let _ = sender.send(MQTTBroadcast::JobUpdate { label, update });
                 }
                 if let Some(caps) = serial_re.captures(&publish.topic) {
@@ -64,8 +65,16 @@ impl MQTTSender {
     pub async fn send_command(&self, port: &str, command: JobCommand) -> color_eyre::Result<()> {
         let data = serde_json::to_vec(&command)?;
         self.client
-            .publish(format!("{}/command", port), QoS::AtMostOnce, false, data)
+            .publish(format!("cthulhu/{}/command", port), QoS::AtMostOnce, false, data)
             .await?;
         Ok(())
     }
+    pub async fn broadcast_command(&self, command: JobCommand) -> color_eyre::Result<()> {
+        let data = serde_json::to_vec(&command)?;
+        self.client
+            .publish(format!("cthulhu/command"), QoS::AtMostOnce, false, data)
+            .await?;
+        Ok(())
+    }
+
 }

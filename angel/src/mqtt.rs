@@ -34,18 +34,18 @@ impl MQTTSender {
     pub async fn send_log_data(&self, data: &[u8]) -> color_eyre::Result<()> {
         if let Some(client) = &self.client {
             client
-                .publish(format!("{}/serial", self.id), QoS::AtMostOnce, false, data)
+                .publish(format!("cthulhu/{}/serial", self.id), QoS::AtMostOnce, false, data)
                 .await?;
         }
         Ok(())
     }
 
-    pub async fn send_update(&mut self, update: JobUpdate) -> color_eyre::Result<()> {
+    pub async fn send_update(&self, update: JobUpdate) -> color_eyre::Result<()> {
         let data = serde_json::to_string(&update)?;
         if let Some(client) = &self.client {
             debug!("Sending update: {update:?}");
             client
-                .publish(format!("{}/update", self.id), QoS::AtMostOnce, false, data)
+                .publish(format!("cthulhu/{}/update", self.id), QoS::AtMostOnce, false, data)
                 .await?;
         } else {
             debug!("Ignoring update.");
@@ -86,7 +86,10 @@ pub async fn create_mqtt_sender_from_config(
         rumqttc::AsyncClient::new(mqtt_options_from_config(&hconfig).await?, 10);
 
     mqtt_client
-        .subscribe(format!("{}/command", hconfig.id), QoS::AtLeastOnce)
+        .subscribe(format!("cthulhu/{}/command", hconfig.id), QoS::AtLeastOnce)
+        .await?;
+    mqtt_client
+        .subscribe(format!("cthulhu/command"), QoS::AtLeastOnce)
         .await?;
 
     let id = hconfig.id.clone();
@@ -96,7 +99,7 @@ pub async fn create_mqtt_sender_from_config(
             if let Ok(notification) = r {
                 match notification {
                     Event::Incoming(Incoming::Publish(payload)) => {
-                        if payload.topic == format!("{}/command", id) {
+                        if payload.topic == format!("cthulhu/{}/command", id) || payload.topic == "cthulhu/command" {
                             let command: JobCommand =
                                 serde_json::from_slice(&payload.payload).unwrap();
                             info!("Received command: {command:?}");

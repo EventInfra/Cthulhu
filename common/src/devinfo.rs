@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Display, Formatter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -42,6 +43,12 @@ impl DeviceInformation {
             DeviceInformation::ProvisioningFailed => DeviceInformationType::Error,
             DeviceInformation::ProvisioningSuccess => DeviceInformationType::Info,
         }
+    }
+}
+
+impl Display for DeviceInformation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self, f)
     }
 }
 

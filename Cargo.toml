@@ -6,6 +6,7 @@ members = [
     "heaven",
     "common",
     "config",
+    "octhulhu-agent",
 ]
 
 default-members = [

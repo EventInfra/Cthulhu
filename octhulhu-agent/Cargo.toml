@@ -1,0 +1,18 @@
+[package]
+name = "octhulhu-agent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.41", features = ["derive"] }
+color-eyre = "0.6.5"
+rumqttc = "0.24.0"
+tokio = { version = "1.46.1", features = ["full"] }
+tokio-serial = { version = "5.4.5", features = ["libudev"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+cthulhu-config = { path = "../config" }
+cthulhu-common = { path = "../common" }
+regex = "1.11.1"
+serde_json = "1.0.141"
+serial2-tokio = { version = "0.1.15", features = ["unix"] }

@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use swexpect::SwitchExpect;
 use swexpect::hay::ReadUntil;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 pub struct ActiveJob {
     pub data: JobData,
@@ -128,6 +128,15 @@ impl ActiveJob {
             .await?;
         for action in &t.actions {
             action.perform(self, p, d, m).await?;
+        }
+
+        let cycles = self.data.state_history.iter().map(|(_, a)| a.as_str()).filter(|&s| s == self.current_state.as_str()).count();
+        if cycles > 3 {
+            warn!("Loop detected! Ending job...");
+            self.add_information(DeviceInformation::LoopDetected).await?;
+            self.current_state = "EndJob".to_string();
+            self.send_update(JobUpdate::JobStageTransition(Utc::now(), self.current_state.clone()))
+                .await?;
         }
         Ok(())
     }

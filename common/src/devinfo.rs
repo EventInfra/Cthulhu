@@ -20,6 +20,7 @@ pub enum DeviceInformation {
     OSCorruption,
     ProvisioningFailed,
     ProvisioningSuccess,
+    LoopDetected,
 }
 
 impl DeviceInformation {
@@ -42,6 +43,7 @@ impl DeviceInformation {
             DeviceInformation::OSCorruption => DeviceInformationType::Error,
             DeviceInformation::ProvisioningFailed => DeviceInformationType::Error,
             DeviceInformation::ProvisioningSuccess => DeviceInformationType::Info,
+            DeviceInformation::LoopDetected => DeviceInformationType::Error,
         }
     }
 }

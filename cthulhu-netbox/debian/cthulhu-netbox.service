@@ -1,0 +1,11 @@
+[Unit]
+Description=Cthulhu - NetBox
+
+[Service]
+ExecStart=/usr/bin/cthulhu-netbox -c /etc/cthulhu/netbox.toml
+Environment="RUST_BACKTRACE=1"
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

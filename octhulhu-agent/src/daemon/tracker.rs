@@ -1,31 +1,31 @@
-use crate::serial::set_led_color;
 use cthulhu_common::job::{JobData, JobStatus};
 use cthulhu_common::status::{JobCommand, JobUpdate};
 use rumqttc::{AsyncClient, QoS};
-use serial2_tokio::SerialPort;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
+use crate::serial::SerialPortManager;
 
 #[derive(Clone)]
 pub struct PortTracker {
+    serial_port_manager: SerialPortManager,
     inner: Arc<Mutex<PortTrackerInner>>,
 }
 
 impl PortTracker {
-    pub fn new() -> Self {
+    pub fn with_serial_port_manager(serial_port_manager: SerialPortManager) -> Self {
         Self {
             inner: Arc::new(Mutex::new(PortTrackerInner {
                 entries: BTreeMap::new(),
             })),
+            serial_port_manager,
         }
     }
 
     pub async fn add_port(
         &self,
         label: &str,
-        serial_port: SerialPort,
         port_idx: u8,
         board_sn: &str,
     ) {
@@ -34,7 +34,7 @@ impl PortTracker {
             label.to_string(),
             PortTrackerEntry {
                 data: JobData::with_label(label),
-                serial_port,
+                serial_port_manager: self.serial_port_manager.clone(),
                 port_idx,
                 board_sn: board_sn.to_string(),
                 module_present: None,
@@ -92,7 +92,7 @@ struct PortTrackerInner {
 
 struct PortTrackerEntry {
     data: JobData,
-    serial_port: SerialPort,
+    serial_port_manager: SerialPortManager,
     board_sn: String,
     port_idx: u8,
     module_present: Option<bool>,
@@ -112,9 +112,15 @@ impl PortTrackerEntry {
         };
         debug!("Color: {} {} {}", r, g, b);
         if self.switch_present.unwrap_or(false) && self.module_present.unwrap_or(false) {
-            set_led_color(&mut self.serial_port, self.port_idx, r, g, b).await?;
+            self.serial_port_manager.set_led_color(
+                &self.board_sn,
+                self.port_idx,
+                r,
+                g,
+                b
+            ).await?;
         } else {
-            set_led_color(&mut self.serial_port, self.port_idx, 0xc7, 0x15, 0x85).await?;
+            self.serial_port_manager.set_led_color(&self.board_sn, self.port_idx, 0xc7, 0x15, 0x85).await?;
         }
         Ok(())
     }

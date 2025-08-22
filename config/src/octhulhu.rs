@@ -1,15 +1,18 @@
+use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
-use serde::Deserialize;
 use tracing::info;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct OcthulhuConfig {
     #[serde(rename = "Heaven")]
     pub heaven: OcthulhuHeavenConfig,
+    #[serde(rename = "NetworkSerial", default)]
+    pub network_serials: Vec<OcthulhuNetworkSerial>,
     #[serde(rename = "PortMapping", default)]
     pub port_mapping: BTreeMap<String, Vec<String>>,
 }
+
 impl OcthulhuConfig {
     pub async fn from_file<P: AsRef<Path>>(p: P) -> color_eyre::Result<Self> {
         info!("Using config file: {}", p.as_ref().display());
@@ -22,6 +25,12 @@ impl OcthulhuConfig {
 #[derive(Deserialize, Debug, Clone)]
 pub struct OcthulhuHeavenConfig {
     pub id: String,
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct OcthulhuNetworkSerial {
     pub host: String,
     pub port: u16,
 }

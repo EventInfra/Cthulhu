@@ -1,38 +1,44 @@
-use std::collections::BTreeMap;
-use std::time::Duration;
-use regex::Regex;
-use rumqttc::{AsyncClient, Event, EventLoop, Incoming, MqttOptions, QoS};
-use serial2_tokio::SerialPort;
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tracing::info;
-use cthulhu_common::status::{JobCommand, JobUpdate};
-use cthulhu_config::octhulhu::{OcthulhuConfig, OcthulhuHeavenConfig};
 use crate::daemon::tracker::PortTracker;
 use crate::serial;
+use crate::serial::discovery::DiscoveredDevice;
+use crate::serial::{SerialPortManager, SerialPortMessage};
+use cthulhu_common::status::{JobCommand, JobUpdate};
+use cthulhu_config::octhulhu::{OcthulhuConfig, OcthulhuHeavenConfig};
+use regex::Regex;
+use rumqttc::{AsyncClient, Event, EventLoop, Incoming, MqttOptions, QoS};
+use std::time::Duration;
+use tracing::{info, warn};
 
 mod tracker;
 
-async fn mqtt_options_from_config(config: &OcthulhuHeavenConfig) -> color_eyre::Result<MqttOptions> {
+async fn mqtt_options_from_config(
+    config: &OcthulhuHeavenConfig,
+) -> color_eyre::Result<MqttOptions> {
     let mut mqttoptions = MqttOptions::new(&config.id, &config.host, config.port);
     mqttoptions.set_keep_alive(Duration::from_secs(5));
     Ok(mqttoptions)
 }
 
 pub async fn daemon(conf: OcthulhuConfig) -> color_eyre::Result<()> {
+    let discovered_boards = serial::discovery::discover_devices(&conf).await?;
+    let boards: Vec<DiscoveredDevice> = discovered_boards
+        .into_iter()
+        .filter(|p| conf.port_mapping.contains_key(&p.serial_number))
+        .collect();
     info!("Opening serial ports...");
-    let mut ports: BTreeMap<String, SerialPort> = BTreeMap::new();
-    for k in conf.port_mapping.keys() {
-        ports.insert(k.clone(), serial::connect_serial_by_sn(&k).await?);
+    let serial_port_manager = serial::SerialPortManager::new();
+    for board in boards.iter() {
+        board.connect_to(&serial_port_manager).await?;
     }
-    info!("Opened {} ports!", ports.len());
+    info!("Opened {} ports!", boards.len());
 
     info!("Connecting to MQTT...");
     let (mqtt_client, mqtt_eventloop) =
-        rumqttc::AsyncClient::new(mqtt_options_from_config(&conf.heaven).await?, 10);
+        AsyncClient::new(mqtt_options_from_config(&conf.heaven).await?, 10);
 
     info!("Starting MQTT thread...");
     let mut handles = Vec::new();
-    let port_tracker = PortTracker::new();
+    let port_tracker = PortTracker::with_serial_port_manager(serial_port_manager.clone());
 
     {
         let port_tracker = port_tracker.clone();
@@ -41,30 +47,33 @@ pub async fn daemon(conf: OcthulhuConfig) -> color_eyre::Result<()> {
         }));
     }
 
-
     info!("Setting up port tracker...");
-    for (id, serial_port) in ports.iter() {
+    for dev in boards.iter() {
+        let id = dev.serial_number.as_str();
         for (port_idx, label) in conf.port_mapping[id].iter().enumerate() {
-            port_tracker.add_port(label, serial_port.try_clone()?, port_idx as u8, &id).await;
+            port_tracker.add_port(label, port_idx as u8, &id).await;
             mqtt_client
                 .subscribe(format!("cthulhu/{}/update", label), QoS::AtLeastOnce)
                 .await?;
             let cmd = JobCommand::GetJobData;
             let v = serde_json::to_string(&cmd)?;
-            mqtt_client.publish(format!("cthulhu/{}/command", label), QoS::AtLeastOnce, false, v).await?;
-
+            mqtt_client
+                .publish(
+                    format!("cthulhu/{}/command", label),
+                    QoS::AtLeastOnce,
+                    false,
+                    v,
+                )
+                .await?;
         }
     }
 
-
-    info!("Starting tasks...");
-    for (id, port) in ports.into_iter() {
-        let tracker = port_tracker.clone();
-        let mqtt = mqtt_client.clone();
-        handles.push(tokio::task::spawn(async move {
-            serial_handler(&id, tracker, port, mqtt).await.unwrap();
-        }));
-    }
+    info!("Starting the serial handler...");
+    handles.push(tokio::task::spawn(async move {
+        serial_handler(serial_port_manager, port_tracker, mqtt_client)
+            .await
+            .unwrap();
+    }));
 
     info!("Running!");
     for h in handles {
@@ -74,7 +83,10 @@ pub async fn daemon(conf: OcthulhuConfig) -> color_eyre::Result<()> {
     Ok(())
 }
 
-async fn mqtt_handler(port_tracker: PortTracker, mut eventloop: EventLoop) -> color_eyre::Result<()> {
+async fn mqtt_handler(
+    port_tracker: PortTracker,
+    mut eventloop: EventLoop,
+) -> color_eyre::Result<()> {
     let update_re = Regex::new(r"cthulhu/(?<port_label>[^/]+)/update")?;
     loop {
         let notification = eventloop.poll().await?;
@@ -92,33 +104,45 @@ async fn mqtt_handler(port_tracker: PortTracker, mut eventloop: EventLoop) -> co
     }
 }
 
-async fn serial_handler(sn: &str, tracker: PortTracker, port: SerialPort, mqtt: AsyncClient) -> color_eyre::Result<()> {
-    let d = "M\r\nP\r\n";
-    port.write_all(d.as_bytes()).await?;
+async fn serial_handler(
+    serial_port_manager: SerialPortManager,
+    tracker: PortTracker,
+    mqtt: AsyncClient,
+) -> color_eyre::Result<()> {
+    let mut receive_channel = serial_port_manager.receiver();
 
-    let mut br = BufReader::new(port);
+    serial_port_manager.request_all_module_updates().await?;
+    serial_port_manager.request_all_presence_updates().await?;
+
     loop {
-        let mut l = String::new();
-        br.read_line(&mut l).await?;
-        let mut cs = l.trim().chars();
-        let c = cs.next().unwrap();
-
-        match c {
-            'P' => {
-                for i in 0..8u8 {
-                    let c = cs.next().unwrap();
-                    let v = c == '1';
-                    tracker.serial_switch_presence_update(sn, i, v, mqtt.clone()).await?;
+        let message = receive_channel.recv().await?;
+        match message {
+            SerialPortMessage::UnknownResponse {
+                serial_number,
+                line,
+            } => {
+                warn!("Unknown board response received from {serial_number}: {line}");
+            }
+            SerialPortMessage::ModuleUpdate {
+                serial_number,
+                present,
+            } => {
+                for (i, v) in present.into_iter().enumerate() {
+                    tracker
+                        .serial_module_presence_update(&serial_number, i as u8, v, mqtt.clone())
+                        .await?;
                 }
             }
-            'M' => {
-                for i in 0..8u8 {
-                    let c = cs.next().unwrap();
-                    let v = c == '1';
-                    tracker.serial_module_presence_update(sn, i, v, mqtt.clone()).await?;
+            SerialPortMessage::PresenceUpdate {
+                serial_number,
+                present,
+            } => {
+                for (i, v) in present.into_iter().enumerate() {
+                    tracker
+                        .serial_switch_presence_update(&serial_number, i as u8, v, mqtt.clone())
+                        .await?;
                 }
             }
-            _ => {}
         }
     }
 }

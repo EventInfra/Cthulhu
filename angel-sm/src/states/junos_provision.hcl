@@ -219,7 +219,7 @@ EOT
     }
     action {
       type = "Send"
-      text = "curl -o /tmp/provision.sh \""
+      text = "fetch -o /tmp/provision.sh \""
     }
     action {
       type = "SendConfigValue"

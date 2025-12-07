@@ -1,6 +1,5 @@
 use serde::Deserialize;
-use std::path::Path;
-use tracing::info;
+use crate::LoadableConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct HeavenConfig {
@@ -12,14 +11,7 @@ pub struct HeavenConfig {
     pub mqtt: HeavenMQTTConfig,
 }
 
-impl HeavenConfig {
-    pub async fn from_file<P: AsRef<Path>>(p: P) -> color_eyre::Result<Self> {
-        info!("Using config file: {}", p.as_ref().display());
-        let d = tokio::fs::read_to_string(p).await?;
-        let d = toml::from_str(d.as_str())?;
-        Ok(d)
-    }
-}
+impl LoadableConfig for HeavenConfig {}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct HeavenWebConfig {

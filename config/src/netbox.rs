@@ -1,6 +1,5 @@
-use std::path::Path;
+use crate::LoadableConfig;
 use serde::Deserialize;
-use tracing::info;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NetboxConfig {
@@ -10,14 +9,7 @@ pub struct NetboxConfig {
     #[serde(rename = "Heaven")]
     pub heaven: NetboxHeavenConfig,
 }
-impl NetboxConfig {
-    pub async fn from_file<P: AsRef<Path>>(p: P) -> color_eyre::Result<Self> {
-        info!("Using config file: {}", p.as_ref().display());
-        let d = tokio::fs::read_to_string(p).await?;
-        let d = toml::from_str(d.as_str())?;
-        Ok(d)
-    }
-}
+impl LoadableConfig for NetboxConfig {}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct NetboxHeavenConfig {

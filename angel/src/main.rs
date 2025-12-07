@@ -12,6 +12,7 @@ use cthulhu_config::angel::AngelConfig;
 use swexpect::SwitchExpect;
 use tokio::sync::mpsc;
 use tracing::info;
+use cthulhu_config::LoadableConfig;
 
 mod args;
 mod job;

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use serde::Deserialize;
-use std::path::{Path, PathBuf};
-use tracing::info;
+use std::path::PathBuf;
+use crate::LoadableConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct AngelConfig {
@@ -23,14 +23,7 @@ fn default_active_states() -> Vec<String> {
     vec!["wipe".to_string()]
 }
 
-impl AngelConfig {
-    pub async fn from_file<P: AsRef<Path>>(p: P) -> color_eyre::Result<Self> {
-        info!("Using config file: {}", p.as_ref().display());
-        let d = tokio::fs::read_to_string(p).await?;
-        let d = toml::from_str(d.as_str())?;
-        Ok(d)
-    }
-}
+impl LoadableConfig for AngelConfig {}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct AngelHeavenConfig {

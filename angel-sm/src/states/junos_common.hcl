@@ -71,28 +71,71 @@ state "JunosLogin" {
 
 state "JunosEnterHappyCli" {
   transition {
-    target = "JunosHappyCli"
+    target = "JunosEnterHappyCli2"
     trigger {
-      type   = "immediate"
+      type = "immediate"
     }
     action {
       type = "SendLine"
       line = "echo \"y\" | crontab -r"
     }
+  }
+}
+
+state "JunosEnterHappyCli2" {
+  transition {
+    target = "JunosEnterHappyCli3"
+    trigger {
+      type  = "regex"
+      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+    }
     action {
       type = "SendLine"
       line = "rm -rfv /var/tmp/autoreload* /tmp/provision* /tmp/autoreload* /var/core/core.* /var/log/* /var/tmp/*"
     }
+  }
+}
+
+state "JunosEnterHappyCli3" {
+  transition {
+    target = "JunosEnterHappyCli4"
+    trigger {
+      type  = "regex"
+      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+    }
     action {
       type = "SendLine"
       line = "sysctl hw.product.model ; sysctl hw.chassis.serialid"
+    }
+  }
+}
+
+state "JunosEnterHappyCli4" {
+  transition {
+    target = "JunosEnterHappyCli5"
+    trigger {
+      type  = "regex"
+      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+    }
+    action {
+      type = "SendLine"
+      line = "nand-mediack"
+    }
+  }
+}
+
+state "JunosEnterHappyCli5" {
+  transition {
+    target = "JunosHappyCli"
+    trigger {
+      type  = "regex"
+      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
     }
     action {
       type = "SendLine"
       line = "sleep 30; cli"
     }
   }
-
 }
 
 state "JunosHappyCli" {

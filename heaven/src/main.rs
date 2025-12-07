@@ -12,6 +12,7 @@ use tracing::level_filters::LevelFilter;
 use tracing::{Level, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::{Layer, Registry};
+use cthulhu_config::LoadableConfig;
 
 mod args;
 mod manager;

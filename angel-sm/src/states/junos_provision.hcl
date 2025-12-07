@@ -223,11 +223,11 @@ EOT
     }
     action {
       type = "SendConfigValue"
-      key  = "juniper_provision_script_url"
+      key  = "provision_url"
     }
     action {
       type = "SendLine"
-      line = "\" || pvfail"
+      line = "/provision/juniper/provision.sh\" || pvfail"
     }
     action {
       type = "SendLine"
@@ -270,6 +270,14 @@ state "ProvisionJunosRunning" {
     action {
       type = "AddDeviceInfo"
       flag = "ProvisioningFailed"
+    }
+  }
+
+  transition {
+    target = "ProvisionJunosWaitReboot"
+    trigger {
+      type   = "string"
+      string = "PROVISION_REBOOT"
     }
   }
 
@@ -336,6 +344,14 @@ state "ProvisionJunosFinish" {
   }
 
   transition {
+    target = "ProvisionJunosWaitReboot"
+    trigger {
+      type   = "string"
+      string = "PROVISION_REBOOT"
+    }
+  }
+
+  transition {
     target = "JunosWaitForPoweroff"
     trigger {
       type   = "string"
@@ -356,6 +372,46 @@ state "ProvisionJunosFinish" {
     trigger {
       type   = "string"
       string = "Waiting (max 60 seconds) for system process"
+    }
+  }
+}
+
+state "ProvisionJunosWaitReboot" {
+  transition {
+    target = "ProvisionJunosRebootLogin"
+    trigger {
+      type   = "string"
+      string = "login:"
+    }
+    action {
+      type = "SendLine"
+      line = "root"
+    }
+  }
+
+  transition {
+    target = "EndJob"
+    trigger {
+      type   = "string"
+      string = "PROVISION_FAILED"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "ProvisioningFailed"
+    }
+  }
+}
+
+state "ProvisionJunosRebootLogin" {
+  transition {
+    target = "JunosLogin"
+    trigger {
+      type   = "string"
+      string = "Password:"
+    }
+    action {
+      type = "SendLine"
+      line = "Cyberwurst"
     }
   }
 }

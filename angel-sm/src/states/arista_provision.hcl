@@ -42,7 +42,7 @@ state "HookAristaCLI" {
 
 state "ProvisionAristaEnterBash" {
   transition {
-    target = "ProvisionAristaBash1"
+    target = "ProvisionAristaBash0"
     trigger {
       type   = "string"
       string = "localhost#"
@@ -50,6 +50,20 @@ state "ProvisionAristaEnterBash" {
     action {
       type = "SendLine"
       line = "bash"
+    }
+  }
+}
+
+state "ProvisionAristaBash0" {
+  transition {
+    target = "ProvisionAristaBash1"
+    trigger {
+      type   = "string"
+      string = "[admin@localhost ~]$"
+    }
+    action {
+      type = "SendLine"
+      line = "export REALTTY=\"$(tty)\""
     }
   }
 }
@@ -86,11 +100,11 @@ EOT
     }
     action {
       type = "SendConfigValue"
-      key  = "arista_provision_script_url"
+      key  = "provision_url"
     }
     action {
       type = "SendLine"
-      line = "\" || pvfail"
+      line = "/provision/arista/provision.sh\" || pvfail"
     }
     action {
       type = "SendLine"
@@ -151,6 +165,14 @@ state "ProvisionAristaBash3" {
   }
 
   transition {
+    target = "AristaWaitForReboot"
+    trigger {
+      type   = "string"
+      string = "PROVISION_REBOOT"
+    }
+  }
+
+  transition {
     target = "ProvisionAristaBash3"
     trigger {
       type   = "string"
@@ -173,6 +195,14 @@ state "ProvisionAristaRunning" {
     action {
       type = "AddDeviceInfo"
       flag = "ProvisioningFailed"
+    }
+  }
+
+  transition {
+    target = "AristaWaitForReboot"
+    trigger {
+      type   = "string"
+      string = "PROVISION_REBOOT"
     }
   }
 
@@ -211,6 +241,14 @@ state "ProvisionAristaFinish" {
     action {
       type = "AddDeviceInfo"
       flag = "ProvisioningFailed"
+    }
+  }
+
+  transition {
+    target = "AristaWaitForReboot"
+    trigger {
+      type   = "string"
+      string = "PROVISION_REBOOT"
     }
   }
 

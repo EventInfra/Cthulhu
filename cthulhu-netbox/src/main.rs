@@ -10,9 +10,9 @@ use rumqttc::{Event, Incoming, MqttOptions, QoS};
 use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::{info, warn};
+use cthulhu_config::LoadableConfig;
 
 mod args;
-
 mod client;
 
 #[tokio::main]

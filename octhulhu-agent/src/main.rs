@@ -1,10 +1,10 @@
 use crate::args::{Cli, Commands};
 use clap::Parser;
+use cthulhu_config::LoadableConfig;
 use cthulhu_config::octhulhu::OcthulhuConfig;
 
 mod args;
 mod daemon;
-
 mod serial;
 
 #[tokio::main]

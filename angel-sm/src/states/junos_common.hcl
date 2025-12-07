@@ -2,6 +2,17 @@ id = "common_junos_wipe"
 
 state "JunosLogin" {
   transition {
+    target = "JunosLogin"
+    trigger {
+      type = "string"
+      string = "login:"
+    }
+    action {
+      type = "SendLine"
+      line = "root"
+    }
+  }
+  transition {
     target = "JunosEnterHappyCli"
     trigger {
       type   = "string"

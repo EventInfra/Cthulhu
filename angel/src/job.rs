@@ -131,7 +131,7 @@ impl ActiveJob {
         }
 
         let cycles = self.data.state_history.iter().map(|(_, a)| a.as_str()).filter(|&s| s == self.current_state.as_str()).count();
-        if cycles > 3 {
+        if cycles > 5 {
             warn!("Loop detected! Ending job...");
             self.add_information(DeviceInformation::LoopDetected).await?;
             self.current_state = "EndJob".to_string();

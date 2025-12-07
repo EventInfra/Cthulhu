@@ -217,7 +217,7 @@ state "ModernJunosEvo4" {
 
 state "ModernJunosQFX1" {
   transition {
-    target = "ModernJunosQFX1"
+    target = "ModernJunosQFX2"
     trigger {
       type = "string"
       string = "Pick an option"

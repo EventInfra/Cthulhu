@@ -23,6 +23,7 @@ pub enum DeviceInformation {
     ProvisioningSuccess,
     LoopDetected,
     RaceConditionFailed,
+    BadFlashBlock,
 }
 
 impl DeviceInformation {
@@ -48,6 +49,7 @@ impl DeviceInformation {
             DeviceInformation::LoopDetected => DeviceInformationType::Error,
             DeviceInformation::RaceConditionFailed => DeviceInformationType::Error,
             DeviceInformation::MacAddress(_) => DeviceInformationType::Info,
+            DeviceInformation::BadFlashBlock => DeviceInformationType::Warning,
         }
     }
 }

@@ -126,6 +126,17 @@ state "JunosEnterHappyCli4" {
 
 state "JunosEnterHappyCli5" {
   transition {
+    target = "JunosEnterHappyCli5"
+    trigger {
+      type = "regex"
+      regex = "^Zone.+Block.+Addr.+:"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "BadFlashBlock"
+    }
+  }
+  transition {
     target = "JunosHappyCli"
     trigger {
       type  = "regex"

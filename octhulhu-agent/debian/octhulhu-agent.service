@@ -1,8 +1,8 @@
 [Unit]
-Description=Cthulhu - NetBox
+Description=Octhulhu Agent
 
 [Service]
-ExecStart=/usr/bin/cthulhu-netbox -c /etc/cthulhu/netbox.toml
+ExecStart=/usr/bin/octhulhu-agent -c /etc/cthulhu/octhulhu.toml daemon
 Environment="RUST_BACKTRACE=1"
 Restart=on-failure
 RestartSec=5s

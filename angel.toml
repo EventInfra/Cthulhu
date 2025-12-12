@@ -1,7 +1,19 @@
-log_dir = "/var/log/cthulhu/"
+log_dir = "/tmp/cthulhu/"
+active_states = [
+    "wipe",
+    "provision",
+    #    "recover",
+]
+
+[JobConfig]
+provision_url = "http://172.16.0.1:5050"
+provision_ping_target = "172.16.0.1"
+tftp_device_ip = "172.16.0.100"
+tftp_server_ip = "172.16.0.1"
+tftp_server_file = "jinstall-ex-3300-12.3R12-S15-domestic-signed.tgz"
 
 [RawTCP]
-endpoint = "192.168.0.171:4001"
+endpoint = "172.16.0.2:4001"
 
 [Heaven]
 id = "S1"

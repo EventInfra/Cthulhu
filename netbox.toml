@@ -1,0 +1,9 @@
+[NetBox]
+url = "https://netbox.example.com"
+token = "mytokenhere"
+target_status = "staged"
+
+[Heaven]
+id = "N1"
+host = "127.0.0.1"
+port = 1883

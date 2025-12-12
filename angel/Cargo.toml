@@ -37,7 +37,7 @@ assets = [
     { source = "../angel.toml", dest = "/etc/cthulhu/angel/s1.toml.example", mode = "644"},
 ]
 maintainer-scripts = "debian/"
-systemd-units = { unit-name = "cthulhu-angel", enable = false }
+systemd-units = { unit-name = "cthulhu-angel", enable = false, stop-on-upgrade = false, restart-after-upgrade = false, start = false }
 
 [package.metadata.generate-rpm]
 assets = [

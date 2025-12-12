@@ -1,0 +1,12 @@
+[Unit]
+Description=Cthulhu - Provision
+
+[Service]
+ExecStart=/usr/bin/cthulhu-provision -c /etc/cthulhu/provision.toml
+Environment="RUST_BACKTRACE=1"
+Restart=on-failure
+RestartSec=5s
+ConditionPathExists=/etc/cthulhu/provision.toml
+
+[Install]
+WantedBy=multi-user.target

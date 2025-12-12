@@ -42,7 +42,7 @@ assets = [
     { source = "../heaven.toml", dest = "/etc/cthulhu/heaven.toml.example", mode = "644"},
 ]
 maintainer-scripts = "debian/"
-systemd-units = { enable = false }
+systemd-units = { enable = false, start = false }
 
 [package.metadata.generate-rpm]
 assets = [

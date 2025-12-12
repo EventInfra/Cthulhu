@@ -16,3 +16,20 @@ serde_json = "1.0.141"
 reqwest = { version = "0.12.22", features = ["json", "rustls-tls-webpki-roots", "http2"], default-features = false }
 serde = { version = "1.0.219", features = ["derive"] }
 regex = "1.11.1"
+
+[package.metadata.deb]
+maintainer = "Roelf Wichertjes <contact@roelf.org>"
+copyright = "2025, Roelf Wichertjes <contact@roelf.org>"
+license-file = ["../LICENSE", "4"]
+extended-description = """\
+Update netbox based on switch changes."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/cthulhu-netbox", "usr/bin/", "755"],
+    { source = "../netbox.toml", dest = "/etc/cthulhu/netbox.toml.example", mode = "644"},
+]
+maintainer-scripts = "debian/"
+systemd-units = { unit-name = "cthulhu-netbox", enable = false, stop-on-upgrade = true, restart-after-upgrade = true, start = false }
+

@@ -14,9 +14,25 @@ cthulhu-config = { path = "../config" }
 askama = "0.14.0"
 mime_guess = "2.0.5"
 include_dir = "0.7.4"
-url = "2.5.7"
 axum-extra = "0.12.1"
-reqwest = "0.12.24"
+reqwest = { version = "0.12.22", features = ["json", "rustls-tls-webpki-roots", "http2"], default-features = false }
 tower-http = { version = "0.6.7", features = ["trace"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio-util = { version = "0.7.17", features = ["io"] }
+
+[package.metadata.deb]
+maintainer = "Roelf Wichertjes <contact@roelf.org>"
+copyright = "2025, Roelf Wichertjes <contact@roelf.org>"
+license-file = ["../LICENSE", "4"]
+extended-description = """\
+Provide provisioning configs."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/cthulhu-provision", "usr/bin/", "755"],
+    { source = "../provision.toml", dest = "/etc/cthulhu/provision.toml.example", mode = "644"},
+]
+maintainer-scripts = "debian/"
+systemd-units = { unit-name = "cthulhu-provision", enable = false, stop-on-upgrade = true, restart-after-upgrade = true, start = false }
+

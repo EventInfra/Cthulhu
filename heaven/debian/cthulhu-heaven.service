@@ -6,6 +6,7 @@ ExecStart=/usr/bin/cthulhu-heaven -c /etc/cthulhu/heaven.toml
 Environment="RUST_BACKTRACE=1"
 Restart=on-failure
 RestartSec=5s
+ConditionPathExists=/etc/cthulhu/heaven.toml
 
 [Install]
 WantedBy=multi-user.target

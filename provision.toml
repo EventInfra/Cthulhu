@@ -1,0 +1,21 @@
+config_server = "http://localhost/by-serial/%SERIAL_NUMBER%"
+
+[Web]
+listen_address = "[::]:5050"
+
+[[ModelOSMapping]]
+vendor = "Arista"
+model = "^DCS-7048.*$"
+target_version = "4.15.6M"
+os_image = "/sw/EOS-4.15.6M.swi"
+
+[[ModelOSMapping]]
+vendor = "Juniper"
+model = "^ex3300.*$"
+target_version = "15.1R7-S13"
+os_image = "/sw/jinstall-ex-3300-15.1R7-S13-domestic-signed.tgz"
+
+[AutoReload]
+snafu_host = "your.host.here"
+deploy_host = "your.host.here"
+ping_target = "1.1.1.1"

@@ -6,6 +6,7 @@ ExecStart=/usr/bin/cthulhu-angel -c /etc/cthulhu/angel/%i.toml
 Environment="RUST_BACKTRACE=full"
 Restart=on-failure
 RestartSec=5s
+ConditionPathExists=/etc/cthulhu/angel/%i.toml
 
 [Install]
 WantedBy=multi-user.target

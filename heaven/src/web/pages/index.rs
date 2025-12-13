@@ -35,7 +35,7 @@ pub async fn port_status(State(state): State<WebState>) -> Markup {
                             @let port_n = (j * column_height) + i;
                             @if port_n < ports.len() {
                                 @let port = &ports[port_n];
-                                table class="inner" style={"background-color: " (port.data.get_status().get_css_backgroundcolor())} {
+                                table class="inner" style={"background-color: " (port.data.get_css_backgroundcolor())} {
                                     tr {
                                         td {
                                             (port.data.get_last_updated().map(|v| v.timeago()).unwrap_or("UNKN".to_string()))

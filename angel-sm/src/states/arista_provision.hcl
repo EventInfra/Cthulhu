@@ -81,7 +81,7 @@ state "ProvisionAristaBash1" {
 cat > /mnt/flash/bootstrap.sh << EOF
 #!/bin/bash
 function pvfail() {
-  echo -en "PROVISION_FAILED\r\n" >> $REALTTY
+  echo -en "PROVISION_FAILED\r\n" | sudo tee $REALTTY
   exit 1
 }
 
@@ -113,7 +113,7 @@ EOT
 echo "[BOOTSTRAP] Running provisioning script..."
 /mnt/flash/provision.sh || pvfail
 echo '[BOOTSTRAP] Provisioning complete!'
-echo -en "PROVISION_SUCCESS\r\n" >> $REALTTY
+echo -en "PROVISION_SUCCESS\r\n" | sudo tee $REALTTY
 echo '[BOOTSTRAP] Waiting a bit...'
 sleep 30
 echo '[BOOTSTRAP] Rebooting...'
@@ -148,7 +148,7 @@ state "ProvisionAristaBash3" {
     }
     action {
       type = "SendLine"
-      line = "tail -fn1000 /mnt/flash/provision.log"
+      line = "sleep 3 ; tail -fn1000 /mnt/flash/provision.log"
     }
   }
 

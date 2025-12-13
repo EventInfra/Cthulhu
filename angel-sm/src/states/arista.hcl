@@ -36,19 +36,31 @@ state "AristaWaitForBootloader" {
     target = "AristaWipeStartupConfig"
     trigger {
       type   = "string"
-      string = "Press Control-C now to enter Aboot shell"
+      string = "Press"
     }
     action {
       type = "Function"
       func = "CaptureAristaAbootVersion"
     }
     action {
-      type  = "Repeat"
-      times = 10
-      action {
-        type = "SendControl"
-        char = "c"
-      }
+      type = "SendControl"
+      char = "c"
+    }
+  }
+
+  transition {
+    target = "AristaRebootAfterStartupConfigWipe"
+    trigger {
+      type   = "string"
+      string = "Aboot#"
+    }
+    action {
+      type = "Function"
+      func = "CaptureAristaAbootVersion"
+    }
+    action {
+      type = "SendLine"
+      line = "rm -rv /mnt/flash/.persist /mnt/flash/persist /mnt/flash/*.sh /mnt/flash/autoreload* /mnt/flash/artnet* /mnt/flash/startup-config /mnt/flash/*.log /mnt/flash/provision* /mnt/flash/zerotouch-config"
     }
   }
 }

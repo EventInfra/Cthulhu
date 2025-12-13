@@ -11,6 +11,7 @@ use include_dir::{include_dir, Dir};
 use serde::Deserialize;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
+use tracing::info;
 
 pub fn get_script_routes() -> Router<AppStateHandle> {
     Router::new()
@@ -55,6 +56,7 @@ struct Stage2Query {
 async fn get_stage2(State(state): State<AppStateHandle>, Host(host): Host, Query(query): Query<Stage2Query>) -> Response {
     if let Some(junos) = query.junos && let Some(sku) = query.sku {
         for os_mapping in state.os_mappings.iter() {
+            info!("Model: {}, Version: {}, Mapping: {} {}", sku, junos, os_mapping.model, os_mapping.target_version);
             if os_mapping.vendor == "Juniper" && os_mapping.model.is_match(&sku)  && !os_mapping.target_version.is_match(&junos) {
                 // We need to upgrade the OS.
                 let data = JunosStage2UpgradeTemplate {

@@ -37,7 +37,7 @@ pub async fn header(
                 td {
                     "Current status:"
                 }
-                td style={"background-color: " (port.data.get_status().get_css_backgroundcolor())} {
+                td style={"background-color: " (port.data.get_css_backgroundcolor())} {
                     (ps)
                 }
                 td {

@@ -6,15 +6,27 @@ use cthulhu_common::job::{JobData, JobStatus};
 pub trait PortStatusExt {
     fn get_css_backgroundcolor(&self) -> String;
 }
-impl PortStatusExt for JobStatus {
+impl PortStatusExt for JobData {
     fn get_css_backgroundcolor(&self) -> String {
-        match self {
+        match self.get_status() {
             JobStatus::Idle => "var(--primary-background)".to_string(),
             JobStatus::FinishSuccess => "#00ff00".to_string(),
             JobStatus::FinishWarning => "#ff9933".to_string(),
             JobStatus::FinishError => "#ff0000".to_string(),
-            JobStatus::Busy => "#33bbff".to_string(),
-            JobStatus::RunningLong => "#bb33ff".to_string(),
+            JobStatus::Busy => {
+                if self.info_items.contains(&DeviceInformation::SoftwareUpdatePerformed) {
+                    "#F5A9B8".to_string()
+                } else {
+                    "#33bbff".to_string()
+                }
+            },
+            JobStatus::RunningLong => {
+                if self.info_items.contains(&DeviceInformation::SoftwareUpdatePerformed) {
+                    "#F5A9B8".to_string()
+                } else {
+                    "#bb33ff".to_string()
+                }
+            },
             JobStatus::Fatal => "#ff33dd".to_string(),
         }
     }

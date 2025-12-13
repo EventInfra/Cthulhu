@@ -85,6 +85,17 @@ state "LegacyJunosUBoot4" {
 
 state "LegacyJunosLoader1" {
   transition {
+    target = "EndJob"
+    trigger {
+      type   = "string"
+      string = "can't load '/kernel'"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "OSCorruption"
+    }
+  }
+  transition {
     target = "LegacyJunosLoader2"
     trigger {
       type   = "string"

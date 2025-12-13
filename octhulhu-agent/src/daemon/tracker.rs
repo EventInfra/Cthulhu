@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
+use cthulhu_common::devinfo::DeviceInformation;
 use crate::serial::SerialPortManager;
 
 #[derive(Clone)]
@@ -99,6 +100,13 @@ struct PortTrackerEntry {
     switch_present: Option<bool>,
 }
 
+fn gamma_correct(i: u8) -> u8 {
+    let gamma = 2.8;
+    let max = 255u8;
+    // https://learn.adafruit.com/led-tricks-gamma-correction/the-longer-fix
+    ((((i as f64) / (max as f64)).powf(gamma) * (max as f64)) + 0.5).min(max as f64).max(0.0) as u8
+}
+
 impl PortTrackerEntry {
     async fn update_led_color(&mut self) -> color_eyre::Result<()> {
         let (r, g, b) = match self.data.get_status() {
@@ -106,8 +114,20 @@ impl PortTrackerEntry {
             JobStatus::FinishSuccess => (0, 255, 0),
             JobStatus::FinishWarning => (0xff, 0x99, 0x33),
             JobStatus::FinishError => (255, 0, 0),
-            JobStatus::Busy => (0x0, 0x0, 0xff),
-            JobStatus::RunningLong => (0xbb, 0x33, 0xff),
+            JobStatus::Busy => {
+                if self.data.info_items.contains(&DeviceInformation::SoftwareUpdatePerformed) {
+                    (0xf5, 0xa9, 0xb8)
+                } else {
+                    (0x0, 0x0, 0xff)
+                }
+            },
+            JobStatus::RunningLong => {
+                if self.data.info_items.contains(&DeviceInformation::SoftwareUpdatePerformed) {
+                    (0xf5, 0xa9, 0xb8)
+                } else {
+                    (0xbb, 0x33, 0xff)
+                }
+            },
             JobStatus::Fatal => (0xff, 0x33, 0xdd),
         };
         debug!("Color: {} {} {}", r, g, b);
@@ -115,9 +135,9 @@ impl PortTrackerEntry {
             self.serial_port_manager.set_led_color(
                 &self.board_sn,
                 self.port_idx,
-                r,
-                g,
-                b
+                gamma_correct(r),
+                gamma_correct(g),
+                gamma_correct(b),
             ).await?;
         } else {
             self.serial_port_manager.set_led_color(&self.board_sn, self.port_idx, 0xc7, 0x15, 0x85).await?;

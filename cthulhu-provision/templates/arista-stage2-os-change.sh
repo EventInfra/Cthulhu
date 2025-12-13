@@ -17,6 +17,7 @@ function clean_nonboot_swi() {
 
 function main() {
   echo "[PROVISION-S2-UPGRADE] Entered main."
+  echo -en "%%%%%\"SoftwareUpdatePerformed\"%%%%%\r\n" >> $REALTTY
   clean_nonboot_swi
   echo "[PROVISION-S2-UPGRADE] Fetching new OS..."
   curl -o "/mnt/flash/$TARGET_SWI" "{{base_url}}/provision/arista/swi/$TARGET_SWI"
@@ -26,7 +27,6 @@ CONSOLESPEED=9600
 SWI=flash:/$TARGET_SWI
 EOF
   echo "[PROVISION-S2-UPGRADE] Finished OS upgrade!"
-  echo -en "%%%%%\"SoftwareUpdatePerformed\"%%%%%\r\n" >> $REALTTY
   echo -en "PROVISION_REBOOT\r\n" >> $REALTTY
 }
 

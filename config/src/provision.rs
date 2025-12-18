@@ -12,7 +12,7 @@ pub struct ProvisionConfig {
     #[serde(rename = "Web")]
     pub web: ProvisionWebConfig,
 
-    #[serde(rename = "ModelOSMapping")]
+    #[serde(rename = "ModelOSMapping", default)]
     pub model_os_mappings: Vec<ProvisionModelOSMapping>,
 
     #[serde(rename = "AutoReload")]

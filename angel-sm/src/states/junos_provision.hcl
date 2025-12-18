@@ -201,6 +201,7 @@ state "ProvisionJunos10" {
     action {
       type = "SendLine"
       line = <<EOT
+/bin/sh
 cat > /tmp/bootstrap.sh << EOF
 #!/bin/sh
 pvfail() {
@@ -241,6 +242,7 @@ echo '[BOOTSTRAP] Powering off...'
 shutdown -p now
 exit 0
 EOF
+exit
 EOT
     }
   }

@@ -390,7 +390,7 @@ state "JunosWaitForPoweroff" {
     target = "EndJob"
     trigger {
       type   = "string"
-      string = "acpi0: Powering system off"
+      string = "Powering system off"
     }
   }
   transition {

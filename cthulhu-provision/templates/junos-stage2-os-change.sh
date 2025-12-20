@@ -30,7 +30,7 @@ fi
 echo "[PROVISION-S2-UPGRADE] Upgrade log:"
 cat /tmp/update.log
 
-if grep -iq error /tmp/update.log; then
+if grep -vi "Error: Secure Boot status is unknown" /tmp/update.log | grep -iq error; then
         echo "[PROVISION-S2-UPGRADE] Failure in update log!"
         pfail
 fi

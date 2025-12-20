@@ -438,11 +438,7 @@ state "ProvisionJunosWaitReboot" {
     target = "ProvisionJunosRebootLogin"
     trigger {
       type   = "string"
-      string = "login:"
-    }
-    action {
-      type = "SendLine"
-      line = "root"
+      string = "Amnesiac"
     }
   }
 
@@ -469,6 +465,18 @@ state "ProvisionJunosRebootLogin" {
     action {
       type = "Function"
       func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
+    target = "ProvisionJunosRebootLogin"
+    trigger {
+      type   = "string"
+      string = "login:"
+    }
+    action {
+      type = "SendLine"
+      line = "root"
     }
   }
 

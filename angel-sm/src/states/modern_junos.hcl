@@ -29,6 +29,17 @@ state "SwitchDetect" {
     }
   }
   transition {
+    target = "ModernJunosWaitForBootloaderMXAlt"
+    trigger {
+      type   = "string"
+      string = "Primary BIOS version CICL_P_"
+    }
+    action {
+      type   = "AddDeviceInfo"
+      Vendor = "Juniper"
+    }
+  }
+  transition {
     target = "ModernJunosWaitForBootloader"
     trigger {
       type   = "string"
@@ -74,7 +85,36 @@ state "SwitchDetect" {
   }
 }
 
+state "ModernJunosWaitForBootloaderMXAlt" {
+  transition {
+    target = "ModernJunosBootloader1"
+    trigger {
+      type = "string"
+      string = "seconds... (press Ctrl-C to interrupt)"
+    }
+    action {
+      type = "Repeat"
+      times = 10
+      action {
+        type = "SendControl"
+        char = "c"
+      }
+    }
+  }
+}
+
 state "ModernJunosWaitForBootloader" {
+  transition {
+    target = "ModernJunosWaitForBootloaderMXAlt"
+    trigger {
+      type   = "string"
+      string = "Primary BIOS version CICL_P_"
+    }
+    action {
+      type   = "AddDeviceInfo"
+      Vendor = "Juniper"
+    }
+  }
   transition {
     target = "ModernJunosEvo1"
     trigger {
@@ -305,6 +345,17 @@ state "ModernJunosAwaitRecoveryShell" {
     trigger {
       type = "regex"
       regex = "\\{[a-z0-9]+:0\\}"
+    }
+    action {
+      type = "SendLine"
+      line = "request system zeroize"
+    }
+  }
+  transition {
+    target = "ModernJunosAnswerZeroize"
+    trigger {
+      type = "string"
+      string = "root>"
     }
     action {
       type = "SendLine"

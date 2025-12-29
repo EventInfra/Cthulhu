@@ -23,6 +23,13 @@ state "JunosLogin" {
     target = "JunosEnterHappyCli"
     trigger {
       type   = "string"
+      string = "root@:~ #"
+    }
+  }
+  transition {
+    target = "JunosEnterHappyCli"
+    trigger {
+      type   = "string"
       string = "root@:LC:0%"
     }
     action {
@@ -86,8 +93,8 @@ state "JunosEnterHappyCli2" {
   transition {
     target = "JunosEnterHappyCli3"
     trigger {
-      type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      type  = "string"
+      string = "root@"
     }
     action {
       type = "SendLine"
@@ -100,8 +107,8 @@ state "JunosEnterHappyCli3" {
   transition {
     target = "JunosEnterHappyCli4"
     trigger {
-      type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      type  = "string"
+      string = "root@"
     }
     action {
       type = "SendLine"
@@ -114,8 +121,8 @@ state "JunosEnterHappyCli4" {
   transition {
     target = "JunosEnterHappyCli5"
     trigger {
-      type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      type  = "string"
+      string = "root@"
     }
     action {
       type = "SendLine"
@@ -139,8 +146,8 @@ state "JunosEnterHappyCli5" {
   transition {
     target = "JunosHappyCli"
     trigger {
-      type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      type  = "string"
+      string = "root@"
     }
     action {
       type = "SendLine"
@@ -341,10 +348,35 @@ state "HookJunosCLI" {
 
 state "JunosPoweroff" {
   transition {
-    target = "JunosPoweroffConfirm"
+    target = "JunosPoweroff2"
     trigger {
       type  = "regex"
       regex = "root(@[A-Za-z0-9\\-]+)?>"
+    }
+    action {
+      type = "SendLine"
+      line = "start shell command \"sysctl hw.re.vmhost_mode\""
+    }
+  }
+}
+
+state "JunosPoweroff2" {
+  transition {
+    target = "JunosPoweroffConfirm"
+    trigger {
+      type  = "string"
+      string = "vmhost_mode: 1"
+    }
+    action {
+      type = "SendLine"
+      line = "request vmhost power-off"
+    }
+  }
+  transition {
+    target = "JunosPoweroffConfirm"
+    trigger {
+      type  = "regex"
+      regex = "sysctl:"
     }
     action {
       type = "SendLine"

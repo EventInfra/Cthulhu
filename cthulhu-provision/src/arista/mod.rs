@@ -1,13 +1,13 @@
 use crate::state::AppStateHandle;
 use askama::Template;
+use axum::Router;
 use axum::body::Body;
 use axum::extract::{Path, Query, State};
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use axum_extra::extract::Host;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use serde::Deserialize;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
@@ -38,6 +38,7 @@ async fn get_stage1(Host(host): Host) -> impl IntoResponse {
 struct AristaStage2Template {
     base_url: String,
     autoreload: bool,
+    apply_config: bool,
 }
 
 #[derive(Template)]
@@ -53,17 +54,35 @@ struct Stage2Query {
     sku: Option<String>,
 }
 
-async fn get_stage2(State(state): State<AppStateHandle>, Host(host): Host, Query(query): Query<Stage2Query>) -> Response {
-    if let Some(eos) = query.eos && let Some(sku) = query.sku {
+async fn get_stage2(
+    State(state): State<AppStateHandle>,
+    Host(host): Host,
+    Query(query): Query<Stage2Query>,
+) -> Response {
+    let mut apply_config = true;
+    if let Some(eos) = query.eos
+        && let Some(sku) = query.sku
+    {
         for os_mapping in state.os_mappings.iter() {
-            if os_mapping.vendor == "Arista" && os_mapping.model.is_match(&sku)  && !os_mapping.target_version.is_match(&eos) {
-                // We need to upgrade the OS.
-                let data = AristaStage2UpgradeTemplate {
-                    base_url: format!("http://{host}"),
-                    target_swi: os_mapping.os_image.file_name().unwrap().to_str().unwrap().to_string(),
-                };
+            if os_mapping.vendor == "Arista" && os_mapping.model.is_match(&sku) {
+                if let Some(skip_config) = os_mapping.skip_config.as_ref() {
+                    apply_config = !skip_config;
+                }
+                if !os_mapping.target_version.is_match(&eos) {
+                    // We need to upgrade the OS.
+                    let data = AristaStage2UpgradeTemplate {
+                        base_url: format!("http://{host}"),
+                        target_swi: os_mapping
+                            .os_image
+                            .file_name()
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .to_string(),
+                    };
 
-                return (StatusCode::OK, data.render().unwrap()).into_response();
+                    return (StatusCode::OK, data.render().unwrap()).into_response();
+                }
             }
         }
     }
@@ -71,6 +90,7 @@ async fn get_stage2(State(state): State<AppStateHandle>, Host(host): Host, Query
     let data = AristaStage2Template {
         base_url: format!("http://{host}"),
         autoreload: state.autoreload.is_some(),
+        apply_config,
     };
 
     (StatusCode::OK, data.render().unwrap()).into_response()
@@ -81,7 +101,9 @@ async fn get_swi(State(state): State<AppStateHandle>, Path(path): Path<String>) 
         if os_mapping.vendor == "Arista" {
             if os_mapping.os_image.ends_with(&path) {
                 let f = File::open(&os_mapping.os_image).await;
-                let Ok(f) = f else { return (StatusCode::NOT_FOUND, "Unable to find SWI").into_response(); };
+                let Ok(f) = f else {
+                    return (StatusCode::NOT_FOUND, "Unable to find SWI").into_response();
+                };
                 let reader = ReaderStream::new(f);
                 let body = Body::from_stream(reader);
                 return (StatusCode::OK, body).into_response();
@@ -92,11 +114,12 @@ async fn get_swi(State(state): State<AppStateHandle>, Path(path): Path<String>) 
     (StatusCode::NOT_FOUND, "Unable to find SWI").into_response()
 }
 
-
-
 static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/arista/assets");
 
-async fn static_path(State(state): State<AppStateHandle>, Path(path): Path<String>) -> impl IntoResponse {
+async fn static_path(
+    State(state): State<AppStateHandle>,
+    Path(path): Path<String>,
+) -> impl IntoResponse {
     let path = path.trim_start_matches('/');
     let mime_type = mime_guess::from_path(path).first_or_text_plain();
 

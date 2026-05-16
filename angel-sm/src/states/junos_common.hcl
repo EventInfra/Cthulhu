@@ -365,7 +365,7 @@ state "JunosPoweroff2" {
     }
     action {
       type = "SendLine"
-      line = "sysctl hw.product.pvi.config.platform.vmhost_support"
+      line = "sysctl hw.re.vm_mode"
     }
   }
 }
@@ -386,7 +386,18 @@ state "JunosPoweroff3" {
     target = "JunosPoweroffVMHost"
     trigger {
       type  = "string"
-      string = "hw.product.pvi.config.platform.vmhost_support: 1"
+      string = "hw.re.vm_mode: 0"
+    }
+    action {
+      type = "SendLine"
+      line = "exit"
+    }
+  }
+  transition {
+    target = "JunosPoweroffVMHost"
+    trigger {
+      type  = "string"
+      string = "hw.re.vm_mode: 1"
     }
     action {
       type = "SendLine"

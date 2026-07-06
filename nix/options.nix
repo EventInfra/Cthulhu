@@ -89,6 +89,88 @@
             }
           );
         };
+
+        octhulhu-agent = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              enable = lib.mkEnableOption "";
+
+              package = lib.mkOption {
+                default = pkgs.octhulhu-agent;
+                type = lib.types.package;
+              };
+
+              mqttId = lib.mkOption {
+                type = lib.types.str;
+                default = "O1";
+              };
+
+              networkSerials = lib.mkOption {
+                type = lib.types.listOf (
+                  lib.types.submodule {
+                    options = {
+                      host = lib.mkOption {
+                        type = lib.types.str;
+                      };
+                      port = lib.mkOption {
+                        type = lib.types.port;
+                      };
+                    };
+                  }
+                );
+              };
+
+              portMapping = lib.mkOption {
+                type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+              };
+            };
+          };
+        };
+
+        provision = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              enable = lib.mkEnableOption "";
+
+              package = lib.mkOption {
+                default = pkgs.cthulhu-provision;
+                type = lib.types.package;
+              };
+
+              listenAddress = lib.mkOption {
+                default = "[::]:5050";
+                type = lib.types.str;
+              };
+
+              configServer = lib.mkOption {
+                type = lib.types.str;
+              };
+
+              ntpServer = lib.mkOption {
+                type = lib.types.str;
+              };
+
+              modelOSMappings = lib.mkOption {
+                type = lib.types.listOf (
+                  lib.types.submodule {
+                    vendor = lib.mkOption {
+                      type = lib.types.str;
+                    };
+                    model = lib.mkOption {
+                      type = lib.types.str;
+                    };
+                    target_version = lib.mkOption {
+                      type = lib.types.str;
+                    };
+                    os_image = lib.mkOption {
+                      type = lib.types.path;
+                    };
+                  }
+                );
+              };
+            };
+          };
+        };
       };
     };
   };

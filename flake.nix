@@ -37,6 +37,9 @@
             inherit (config.packages)
               cthulhu-heaven
               cthulhu-angel
+              cthulhu-netbox
+              cthulhu-provision
+              octhulhu-agent
               ;
           };
           packages =
@@ -50,6 +53,9 @@
               packages = [
                 "cthulhu-heaven"
                 "cthulhu-angel"
+                "cthulhu-netbox"
+                "cthulhu-provision"
+                "octhulhu-agent"
               ];
             in
             builtins.listToAttrs (
@@ -58,6 +64,13 @@
                 value = call n;
               }) packages
             );
+
+          devShells.default = pkgs.mkShell {
+            nativeBuildInputs = with pkgs; [
+              graphviz
+              cargo
+            ];
+          };
         };
     };
 }

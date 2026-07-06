@@ -5,5 +5,6 @@
     ./heaven.nix
     ./mqtt.nix
     ./angel.nix
+    ./octhulhu.nix
   ];
 }

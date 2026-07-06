@@ -72,6 +72,13 @@ state "SwitchDetect" {
       Vendor = "Juniper"
     }
   }
+  transition {
+    target = "ModernJunosQFXBypass"
+    trigger {
+      type   = "string"
+      string = "CBEP_P_SUM1_00.15.01"
+    }
+  }
 }
 
 state "ModernJunosWaitForBootloader" {
@@ -129,6 +136,13 @@ state "ModernJunosWaitForBootloader" {
     trigger {
       type   = "string"
       string = "CBDE_SFP_00.21_01.01"
+    }
+  }
+  transition {
+    target = "ModernJunosQFXBypass"
+    trigger {
+      type   = "string"
+      string = "CBEP_P_SUM1_00.15.01"
     }
   }
 }

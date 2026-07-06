@@ -44,6 +44,7 @@ pub struct ProvisionModelOSMapping {
     #[serde(deserialize_with = "deserialize_regex")]
     pub target_version: Regex,
     pub os_image: PathBuf,
+    pub skip_config: Option<bool>,
 }
 
 fn deserialize_regex<'de, D>(deserializer: D) -> Result<Regex, D::Error>

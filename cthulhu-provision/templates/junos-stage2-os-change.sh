@@ -20,7 +20,7 @@ echo -e "request system storage cleanup\nyes" | cli
 echo 'request system snapshot delete snap*' | cli
 
 echo "[PROVISION-S2-UPGRADE] Upgrading OS image..."
-if sysctl hw.product.pvi_model 2>/dev/null | grep -q "hw.product.pvi_model: ex2300-c" ; then
+if sysctl hw.product.pvi_model 2>/dev/null | grep -q "hw.product.pvi_model: ex2300" ; then
   fetch -o /.mount/tmp/ex2300c-image.tgz "{{base_url}}/provision/juniper/jinstall/{{target_jinstall}}"
   echo "request system software add /.mount/tmp/ex2300c-image.tgz no-copy no-validate force unlink" | cli > /tmp/update.log
 else

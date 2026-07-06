@@ -40,6 +40,7 @@ function main() {
                 curl -o "/mnt/flash/$file" "{{base_url}}/provision/arista/assets/$file"
         done
 {% endif %}
+{% if apply_config %}
         S=0
         for i in 1 2 3 4 5; do
                 S=1
@@ -52,6 +53,7 @@ function main() {
                 echo "[PROVISION-S2] Failed to apply config!"
                 exit 1
         fi
+{% endif %}
         echo "[PROVISION-S2] Finished!"
 }
 

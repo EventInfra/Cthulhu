@@ -6,4 +6,5 @@ depends = [
   "vmhost_junos_wipe",
   "arista_wipe",
   "aruba_wipe",
+  "hp_wipe",
 ]

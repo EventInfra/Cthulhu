@@ -26,6 +26,7 @@ pub enum DeviceInformation {
     RaceConditionFailed,
     BadFlashBlock,
     SoftwareUpdatePerformed,
+    DidNotWipe,
 }
 
 impl DeviceInformation {
@@ -54,6 +55,7 @@ impl DeviceInformation {
             DeviceInformation::BadFlashBlock => DeviceInformationType::Warning,
             DeviceInformation::BootloaderVersion(_) => DeviceInformationType::Info,
             DeviceInformation::SoftwareUpdatePerformed => DeviceInformationType::Warning,
+            DeviceInformation::DidNotWipe => DeviceInformationType::Error,
         }
     }
 }

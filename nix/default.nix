@@ -6,5 +6,6 @@
     ./mqtt.nix
     ./angel.nix
     ./octhulhu.nix
+    ./provision.nix
   ];
 }

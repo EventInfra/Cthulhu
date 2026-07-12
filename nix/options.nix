@@ -153,17 +153,19 @@
               modelOSMappings = lib.mkOption {
                 type = lib.types.listOf (
                   lib.types.submodule {
-                    vendor = lib.mkOption {
-                      type = lib.types.str;
-                    };
-                    model = lib.mkOption {
-                      type = lib.types.str;
-                    };
-                    target_version = lib.mkOption {
-                      type = lib.types.str;
-                    };
-                    os_image = lib.mkOption {
-                      type = lib.types.path;
+                    options = {
+                      vendor = lib.mkOption {
+                        type = lib.types.str;
+                      };
+                      model = lib.mkOption {
+                        type = lib.types.str;
+                      };
+                      target_version = lib.mkOption {
+                        type = lib.types.str;
+                      };
+                      os_image = lib.mkOption {
+                        type = lib.types.path;
+                      };
                     };
                   }
                 );
